@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Funny Panni - World's Funniest Pig! 🐷🤣</title>
+    
+    <!-- Meta tags for SEO -->
+    <meta name="description" content="Funny Panni - The world's funniest pig bringing you daily laughs and oinks of absurdity!">
+    <meta name="keywords" content="funny pig, animated pig, pig jokes, funny animal website">
+    
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" content="Funny Panni - World's Funniest Pig!">
+    <meta property="og:description" content="Your daily oink of absurdity, one laugh at a time. Where pigs talk and humans LOL!">
+    <meta property="og:image" content="/api/placeholder/400/320">
+    <meta property="og:url" content="https://www.funnypanni.fun">
+    <meta property="og:type" content="website">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Comic+Neue:wght@700&display=swap');
+        
+        :root {
+            --primary: #ff6b6b;
+            --secondary: #4ecdc4;
+            --accent: #ffe66d;
+            --dark: #292f36;
+            --light: #f7fff7;
+            --mud: #8d6e63;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: var(--light);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 0;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header h1 {
+            font-family: 'Bubblegum Sans', cursive;
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 2;
+            text-shadow: 3px 3px 0 var(--dark);
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .bouncing-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.2;
+        }
+        
+        .bouncing-element {
+            position: absolute;
+            font-size: 2rem;
+            animation: bounce 8s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(10deg);
+            }
+        }
+        
+        main {
+            padding: 2rem 0;
+        }
+        
+        .panni-stage {
+            background-color: var(--secondary);
+            border-radius: 20px;
+            height: 400px;
+            position: relative;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .mud-puddle {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            height: 40px;
+            background-color: var(--mud);
+            border-radius: 50% 50% 0 0;
+            opacity: 0.8;
+        }
+        
+        .panni-container {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 180px;
+            transition: all 0.3s ease;
+        }
+        
+        .panni {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .panni-body {
+            position: absolute;
+            width: 120px;
+            height: 80px;
+            background-color: #f7969f;
+            border-radius: 50px;
+            top: 50px;
+            left: 30px;
+            z-index: 1;
+            border: 3px solid #222;
+        }
+        
+        .panni-head {
+            position: absolute;
+            width: 90px;
+            height: 80px;
+            background-color: #f7969f;
+            border-radius: 50px 50px 45px 45px;
+            top: 25px;
+            left: 15px;
+            z-index: 2;
+            border: 3px solid #222;
+        }
+        
+        .panni-ear {
+            position: absolute;
+            width: 35px;
+            height: 35px;
+            background-color: #f7969f;
+            border-radius: 50% 50% 0 50%;
+            z-index: 1;
+            border: 3px solid #222;
+            transform-origin: bottom center;
+        }
+        
+        .panni-ear.left {
+            top: 0px;
+            left: 5px;
+            transform: rotate(-30deg);
+        }
+        
+        .panni-ear.right {
+            top: 0px;
+            right: 5px;
+            transform: rotate(30deg);
+            border-radius: 50% 50% 50% 0;
+        }
+        
+        .panni-ear::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: #f4787f;
+            border-radius: 50%;
+            top: 5px;
+            left: 5px;
+        }
+        
+        .panni-eye {
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            background-color: white;
+            border-radius: 50%;
+            top: 35px;
+            z-index: 3;
+            border: 2px solid #222;
+        }
+        
+        .panni-eye.left {
+            left: 20px;
+        }
+        
+        .panni-eye.right {
+            right: 20px;
+        }
+        
+        .panni-pupil {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: black;
+            border-radius: 50%;
+            top: 5px;
+            left: 5px;
+        }
+        
+        .panni-snout {
+            position: absolute;
+            width: 45px;
+            height: 35px;
+            background-color: #f4787f;
+            border-radius: 40%;
+            top: 52px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            border: 2px solid #222;
+        }
+        
+        .panni-nostril {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #222;
+            border-radius: 50%;
+            top: 12px;
+        }
+        
+        .panni-nostril.left {
+            left: 10px;
+        }
+        
+        .panni-nostril.right {
+            right: 10px;
+        }
+        
+        /* Add a smile to make Panni cuter */
+        .panni-smile {
+            position: absolute;
+            width: 25px;
+            height: 12px;
+            border-bottom: 3px solid #222;
+            border-radius: 0 0 12px 12px;
+            top: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 4;
+        }
+        
+        /* Add tongue sticking out */
+        .panni-tongue {
+            position: absolute;
+            width: 15px;
+            height: 18px;
+            background-color: #ff6b81;
+            border-radius: 0 0 8px 8px;
+            top: 35px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            border: 2px solid #222;
+            border-top: none;
+            display: none; /* Hidden by default, shown on some animations */
+        }
+        
+        .panni-leg {
+            position: absolute;
+            width: 15px;
+            height: 25px;
+            background-color: #f4787f;
+            border-radius: 5px;
+            bottom: 0;
+            z-index: 2;
+            border: 2px solid #222;
+        }
+        
+        .panni-leg::after {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 7px;
+            background-color: #53c4b8;
+            border-radius: 5px;
+            bottom: 0;
+            left: -2px;
+            border: 1px solid #222;
+        }
+        
+        .panni-leg.front-left {
+            left: 40px;
+        }
+        
+        .panni-leg.front-right {
+            left: 60px;
+        }
+        
+        .panni-leg.back-left {
+            right: 60px;
+        }
+        
+        .panni-leg.back-right {
+            right: 40px;
+        }
+        
+        .panni-tail {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #f4787f;
+            border-radius: 50%;
+            top: 50px;
+            right: 10px;
+            transform: rotate(30deg);
+            z-index: 1;
+            border: 2px solid #222;
+        }
+        
+        .panni-tail::before {
+            content: '';
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-right: 3px solid #f4787f;
+            border-radius: 50%;
+            top: -5px;
+            right: 5px;
+            transform: rotate(-20deg);
+        }
+        
+        .panni-sunglasses {
+            position: absolute;
+            top: 35px;
+            left: 5px;
+            width: 80px;
+            height: 30px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 5;
+        }
+        
+        /* Replace SVG glasses with yellow cartoon glasses */
+        .panni-yellow-glasses {
+            position: absolute;
+            width: 90px;
+            height: 30px;
+            top: 64px; /* Lowered by 10 pixels */
+            left: 15px;
+            z-index: 5;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .panni-yellow-glasses .glasses-frame {
+            position: absolute;
+            width: 90px;
+            height: 18px;
+            background-color: #000;
+            border-radius: 3px;
+            top: 0;
+            left: 0;
+            border: 2px solid #222;
+            opacity: 0.55; /* Reduced opacity by 15% (from 0.7 to 0.55) */
+        }
+        
+        .panni-yellow-glasses .glasses-lens {
+            position: absolute;
+            width: 35px;
+            height: 16px;
+            background-color: #000;
+            border-radius: 3px;
+            top: 1px;
+            border: 1px solid #222;
+            opacity: 0.55; /* Reduced opacity by 15% */
+        }
+        
+        .panni-yellow-glasses .glasses-lens.left {
+            left: 8px;
+        }
+        
+        .panni-yellow-glasses .glasses-lens.right {
+            right: 8px;
+        }
+        
+        .panni-yellow-glasses .glasses-bridge {
+            position: absolute;
+            width: 14px;
+            height: 4px;
+            background-color: #000;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-top: 1px solid #222;
+            border-bottom: 1px solid #222;
+            opacity: 0.55; /* Reduced opacity by 15% */
+        }
+        
+        .panni-party-hat {
+            position: absolute;
+            width: 45px; /* Made wider */
+            height: 60px; /* Made taller */
+            background-color: #53c4b8;
+            top: -40px; /* Adjusted top position for larger hat */
+            right: -20px; /* Using right instead of left to position from the right edge */
+            left: auto; /* Disabling left positioning */
+            transform: rotate(15deg);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            border: 3px solid #222;
+            border-bottom: none;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+        
+        .hat-pom {
+            position: absolute;
+            width: 20px; /* Bigger pom-pom */
+            height: 20px; /* Bigger pom-pom */
+            background-color: #fed800;
+            border-radius: 50%;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 2px solid #222;
+        }
+        
+        /* Add speech bubble elements */
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 1.2rem;
+            max-width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 10;
+            border: 3px solid #222;
+        }
+        
+        .panni-sunglasses {
+            position: absolute;
+            top: 43px;
+            left: 15px;
+            width: 70px;
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .panni-party-hat {
+            position: absolute;
+            top: -15px;
+            left: 50px;
+            width: 30px;
+            height: 40px;
+            background-color: var(--accent);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .hat-pom {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 15px;
+            height: 15px;
+            background-color: var(--primary);
+            border-radius: 50%;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 10px 15px;
+            font-size: 1.2rem;
+            max-width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .bubble-tail {
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            clip-path: polygon(0 0, 100% 0, 50% 100%);
+        }
+        
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .control-btn {
+            padding: 0.8rem 1.5rem;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Comic Neue', cursive;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .control-btn:hover {
+            background-color: #ff5252;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .control-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .joke-of-the-day {
+            background-color: var(--secondary);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .joke-of-the-day h2 {
+            font-family: 'Bubblegum Sans', cursive;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .joke-of-the-day p {
+            font-size: 1.2rem;
+            font-style: italic;
+            position: relative;
+            padding: 0 2rem;
+            transition: opacity 0.3s ease;
+        }
+        
+        .joke-of-the-day p::before,
+        .joke-of-the-day p::after {
+            content: '"';
+            font-size: 2rem;
+            position: absolute;
+            color: var(--accent);
+        }
+        
+        .joke-of-the-day p::before {
+            left: 0;
+            top: -0.5rem;
+        }
+        
+        .joke-of-the-day p::after {
+            right: 0;
+            bottom: -1rem;
+        }
+        
+        .fun-facts {
+            background-color: var(--accent);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .fun-facts h2 {
+            font-family: 'Bubblegum Sans', cursive;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+        
+        .fact-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+        
+        .mud-splatter {
+            position: absolute;
+            background: var(--mud);
+            border-radius: 50%;
+            opacity: 0.7;
+            animation: bounce-in 0.5s ease;
+            z-index: 2;
+        }
+        
+        .coming-soon {
+            background-color: var(--primary);
+            padding: 1.5rem;
+            border-radius: 20px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .coming-soon h2 {
+            font-family: 'Bubblegum Sans', cursive;
+            margin-bottom: 1rem;
+            color: white;
+        }
+        
+        .coming-soon p {
+            font-size: 1.2rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .loading-animation {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .loading-animation::before {
+            content: '';
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 6px solid var(--accent);
+            border-top-color: var(--secondary);
+            animation: spin 1.5s linear infinite;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        
+        footer {
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 2rem 0;
+            margin-top: 2rem;
+        }
+        
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .social-btn {
+            width: 40px;
+            height: 40px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.2s ease;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-3px);
+            background-color: var(--secondary);
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+            
+            .panni-stage {
+                height: 350px;
+            }
+            
+            .control-panel {
+                justify-content: center;
+            }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(-50%) rotate(0deg); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-55%) rotate(-5deg); }
+            20%, 40%, 60%, 80% { transform: translateX(-45%) rotate(5deg); }
+        }
+        
+        @keyframes jump {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-50px); }
+        }
+        
+        @keyframes slip {
+            0% { transform: translateX(-50%) rotate(0deg); }
+            20% { transform: translateX(-30%) rotate(10deg); }
+            40% { transform: translateX(-70%) rotate(-20deg); }
+            60% { transform: translateX(-40%) rotate(5deg); }
+            80% { transform: translateX(-60%) rotate(-5deg); }
+            100% { transform: translateX(-50%) rotate(0deg); }
+        }
+        
+        @keyframes fall {
+            0% { transform: translateX(-50%) translateY(0) rotate(0deg); }
+            60% { transform: translateX(-50%) translateY(20px) rotate(180deg); }
+            100% { transform: translateX(-50%) translateY(0) rotate(360deg); }
+        }
+        
+        @keyframes bounce-in {
+            0% { transform: scale(0); opacity: 0; }
+            60% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        @keyframes blink {
+            0% { transform: scale(1); }
+            50% { transform: scale(0.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .emoji-rain {
+            position: absolute;
+            top: -20px;
+            font-size: 24px;
+            animation: emoji-fall 3s linear forwards;
+            z-index: 5;
+        }
+        
+        @keyframes emoji-fall {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(450px) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Funny Panni 🐷🤣</h1>
+            <p>Official home of the world's funniest pig!</p>
+            <p><em>Your daily oink of absurdity, one laugh at a time.</em></p>
+        </div>
+        <div class="bouncing-elements">
+            <span class="bouncing-element" style="top: 20%; left: 10%;">🐷</span>
+            <span class="bouncing-element" style="top: 50%; left: 30%; animation-delay: 0.5s;">🤣</span>
+            <span class="bouncing-element" style="top: 30%; left: 70%; animation-delay: 1s;">🎉</span>
+            <span class="bouncing-element" style="top: 60%; left: 85%; animation-delay: 1.5s;">💕</span>
+            <span class="bouncing-element" style="top: 10%; left: 50%; animation-delay: 2s;">🎩</span>
+            <span class="bouncing-element" style="top: 80%; left: 20%; animation-delay: 2.5s;">🎵</span>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="panni-stage">
+            <div class="panni-container">
+                <div class="panni">
+                    <div class="panni-body"></div>
+                    <div class="panni-head">
+                        <div class="panni-ear left"></div>
+                        <div class="panni-ear right"></div>
+                        <div class="panni-eye left"><div class="panni-pupil"></div></div>
+                        <div class="panni-eye right"><div class="panni-pupil"></div></div>
+                        <div class="panni-snout">
+                            <div class="panni-nostril left"></div>
+                            <div class="panni-nostril right"></div>
+                            <div class="panni-smile"></div>
+                        </div>
+                        <div class="panni-tongue"></div>
+                    </div>
+                    <div class="panni-leg front-left"></div>
+                    <div class="panni-leg front-right"></div>
+                    <div class="panni-leg back-left"></div>
+                    <div class="panni-leg back-right"></div>
+                    <div class="panni-tail"></div>
+                    
+                    <svg class="panni-sunglasses" viewBox="0 0 100 30">
+                        <path d="M0,15 Q10,5 25,15 Q40,25 50,15 Q60,5 75,15 Q90,25 100,15" stroke="#333" stroke-width="3" fill="none"/>
+                        <circle cx="25" cy="15" r="12" fill="#333"/>
+                        <circle cx="75" cy="15" r="12" fill="#333"/>
+                    </svg>
+                    
+                    <div class="panni-yellow-glasses">
+                        <div class="glasses-frame"></div>
+                        <div class="glasses-lens left"></div>
+                        <div class="glasses-lens right"></div>
+                        <div class="glasses-bridge"></div>
+                    </div>
+                    
+                    <div class="panni-party-hat">
+                        <div class="hat-pom"></div>
+                    </div>
+                    <div class="panni-leg front-left"></div>
+                    <div class="panni-leg front-right"></div>
+                    <div class="panni-leg back-left"></div>
+                    <div class="panni-leg back-right"></div>
+                    <div class="panni-tail"></div>
+                    
+                    <svg class="panni-sunglasses" viewBox="0 0 100 30">
+                        <path d="M0,15 Q10,5 25,15 Q40,25 50,15 Q60,5 75,15 Q90,25 100,15" stroke="#333" stroke-width="3" fill="none"/>
+                        <circle cx="25" cy="15" r="12" fill="#333"/>
+                        <circle cx="75" cy="15" r="12" fill="#333"/>
+                    </svg>
+                    
+                    <div class="panni-party-hat">
+                        <div class="hat-pom"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mud-puddle"></div>
+            
+            <div class="speech-bubble">
+                <span id="bubble-text">Oink oink!</span>
+                <div class="bubble-tail"></div>
+            </div>
+        </section>
+
+        <section class="control-panel">
+            <button class="control-btn" id="btn-dance">Dance! 💃</button>
+            <button class="control-btn" id="btn-jump">Jump! ⬆️</button>
+            <button class="control-btn" id="btn-slip">Slip! 🤪</button>
+            <button class="control-btn" id="btn-fall">Fall! 🙃</button>
+            <button class="control-btn" id="btn-sunglasses">Sunglasses 😎</button>
+            <button class="control-btn" id="btn-party-hat">Party Hat 🎉</button>
+            <button class="control-btn" id="btn-speak">Speak! 🗯️</button>
+            <button class="control-btn" id="btn-emoji-rain">Emoji Rain 🎊</button>
+            <button class="control-btn" id="btn-scream">Panni Scream 😱</button>
+            <button class="control-btn" id="btn-chase">Chase Carrot 🥕</button>
+        </section>
+        
+        <section class="joke-of-the-day">
+            <h2>Today's Joke</h2>
+            <p id="joke-text">Loading oinks...</p>
+        </section>
+
+        <section class="fun-facts">
+            <h2>Fun Facts About Panni!</h2>
+            <div class="fact-item">
+                <span>🧠</span>
+                <p>Panni knows exactly 27 jokes but always tells them in the wrong order!</p>
+            </div>
+            <div class="fact-item">
+                <span>🛀</span>
+                <p>Panni takes mud baths twice a day but somehow ends up cleaner!</p>
+            </div>
+            <div class="fact-item">
+                <span>🎯</span>
+                <p>Panni once tried to be a gymnast but kept turning every somersault into a mud roll!</p>
+            </div>
+            <div class="fact-item">
+                <span>🎭</span>
+                <p>Panni's favorite movie is "Babe" but thinks the main character lacks comedic timing!</p>
+            </div>
+        </section>
+        
+        <section class="coming-soon">
+            <h2>Coming Soon: Panni's Meme & GIF Factory!</h2>
+            <p>Our hilarious pig is working on something BIG! Stay tuned for exclusive pig memes and GIFs.</p>
+            <div class="loading-animation"></div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2025 Funny Panni - Where pigs talk and humans LOL!</p>
+            <div class="social-links">
+                <a href="#" class="social-btn" title="Follow for more oinks!">📱</a>
+                <a href="#" class="social-btn" title="Follow for more oinks!">📷</a>
+                <a href="#" class="social-btn" title="Follow for more oinks!">🐦</a>
+                <a href="#" class="social-btn" title="Follow for more oinks!">📺</a>
+            </div>
+            <p>All oinks reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elements
+            const panniContainer = document.querySelector('.panni-container');
+            const speechBubble = document.querySelector('.speech-bubble');
+            const bubbleText = document.getElementById('bubble-text');
+            const panniSunglasses = document.querySelector('.panni-sunglasses');
+            const panniPartyHat = document.querySelector('.panni-party-hat');
+            const panniStage = document.querySelector('.panni-stage');
+            
+            // Buttons
+            const btnDance = document.getElementById('btn-dance');
+            const btnJump = document.getElementById('btn-jump');
+            const btnSlip = document.getElementById('btn-slip');
+            const btnFall = document.getElementById('btn-fall');
+            const btnSunglasses = document.getElementById('btn-sunglasses');
+            const btnPartyHat = document.getElementById('btn-party-hat');
+            const btnSpeak = document.getElementById('btn-speak');
+            const btnEmojiRain = document.getElementById('btn-emoji-rain');
+            const btnScream = document.getElementById('btn-scream');
+            const btnChase = document.getElementById('btn-chase');
+            
+            // Sounds - Using actual audio files
+            // Replace these URLs with your own audio files when hosting the site
+            const audioOink = new Audio('https://www.soundjay.com/animal/sounds/pig-1.mp3');
+            const audioSplash = new Audio('https://www.soundjay.com/water/sounds/splash-1.mp3');
+            const audioScream = new Audio('https://www.soundjay.com/animal/sounds/pig-6.mp3');
+            const audioLaugh = new Audio('https://www.soundjay.com/human/sounds/laugh-1.mp3');
+            
+            // Set volume for each sound
+            [audioOink, audioSplash, audioScream, audioLaugh].forEach(audio => {
+                audio.volume = 0.5;
+            });
+            
+            // Function to handle sound playback - will help with browser autoplay issues
+            function playSound(audio) {
+                // Return a promise that resolves when the sound starts playing or rejects on error
+                return audio.play().catch(error => {
+                    console.warn('Audio playback failed:', error);
+                    return false;
+                });
+            }
+            
+            // Add an indicator at the top of the page to enable sounds
+            const soundToggle = document.createElement('button');
+            soundToggle.textContent = '🔊 Enable Sounds';
+            soundToggle.style.position = 'fixed';
+            soundToggle.style.top = '10px';
+            soundToggle.style.right = '10px';
+            soundToggle.style.zIndex = '1000';
+            soundToggle.style.padding = '8px 12px';
+            soundToggle.style.backgroundColor = '#ff6b6b';
+            soundToggle.style.color = 'white';
+            soundToggle.style.border = 'none';
+            soundToggle.style.borderRadius = '5px';
+            soundToggle.style.cursor = 'pointer';
+            soundToggle.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+            document.body.appendChild(soundToggle);
+            
+            let soundsEnabled = false;
+            
+            soundToggle.addEventListener('click', () => {
+                // Try to play a sound to enable audio context
+                audioOink.play().then(() => {
+                    soundsEnabled = true;
+                    soundToggle.textContent = '🔊 Sounds Enabled';
+                    soundToggle.style.backgroundColor = '#4ecdc4';
+                    
+                    // Hide the button after 3 seconds
+                    setTimeout(() => {
+                        soundToggle.style.opacity = '0.5';
+                    }, 3000);
+                }).catch(e => {
+                    console.error('Failed to enable sounds:', e);
+                    soundToggle.textContent = '🔇 Sound Error - Click Again';
+                    soundToggle.style.backgroundColor = '#ff5252';
+                });
+            });
+            
+            // Override the default showSpeechBubble function to use our sound toggle
+            const originalShowSpeechBubble = showSpeechBubble;
+            showSpeechBubble = function(text) {
+                originalShowSpeechBubble(text);
+                
+                // Only try to play sound if enabled
+                if (soundsEnabled) {
+                    audioOink.currentTime = 0;
+                    playSound(audioOink);
+                }
+            };
+            
+            // Speech phrases
+            const phrases = [
+                "Oink oink! That tickles!",
+                "I'm the funniest pig in town! Oink!",
+                "Do I have mud on my snout?",
+                "Did someone say 'bacon'? NOT FUNNY!",
+                "I'm ready for my close-up!",
+                "This little piggy went WHEEEEE!",
+                "Oops! I did it again!",
+                "I'm not just ham-some, I'm hilarious!",
+                "Party like a pig-star!",
+                "That's all, folks! Oink oink!"
+            ];
+            
+            // Jokes
+            const jokes = [
+                "Why did the pig sit in the sun? To become bacon!",
+                "What do you call a pig that knows karate? Pork Chop!",
+                "I'm not lazy, I'm just in 'sow' motion.",
+                "Keep calm and hog on!",
+                "I tried to write a pig joke, but it boar-ed everyone!",
+                "Why don't pigs use computers? They're afraid of the boar-dom!",
+                "What do you call a pig with three eyes? Piiig!",
+                "Why did the pig give up on their fitness goals? Too much ham commitment!",
+                "What's a pig's favorite game? Mud-opoly!",
+                "How do pigs text each other? They swine and send!"
+            ];
+            
+            // Emojis for the rain
+            const emojis = ['🐷', '🤣', '💕', '🎉', '🎵', '🎪', '🎈', '🎁', '🌈', '⭐'];
+            
+            // Animation control
+            let currentAnimation = null;
+            let chaseInterval = null;
+            
+            function resetPanni() {
+                // Stop any current animation
+                if (currentAnimation) {
+                    panniContainer.style.animation = 'none';
+                    panniContainer.offsetHeight; // Trigger reflow
+                    panniContainer.style.animation = '';
+                    currentAnimation = null;
+                }
+                
+                // Reset position
+                panniContainer.style.transform = 'translateX(-50%)';
+                panniContainer.style.bottom = '40px';
+            }
+            
+            function showSpeechBubble(text) {
+                bubbleText.textContent = text;
+                speechBubble.style.opacity = '1';
+                speechBubble.style.transform = 'translateY(0)';
+                
+                // Position the bubble
+                speechBubble.style.top = '50px';
+                speechBubble.style.left = '60%';
+                
+                // Add blink animation to pig's eyes when speaking
+                const pupils = document.querySelectorAll('.panni-pupil');
+                pupils.forEach(pupil => {
+                    pupil.style.animation = 'blink 0.3s';
+                    setTimeout(() => {
+                        pupil.style.animation = '';
+                    }, 300);
+                });
+                
+                // Hide after 3 seconds
+                setTimeout(() => {
+                    speechBubble.style.opacity = '0';
+                    speechBubble.style.transform = 'translateY(20px)';
+                }, 3000);
+                
+                // Play oink sound
+                audioOink.currentTime = 0;
+                audioOink.play();
+            }
+            
+            function createMudSplatter() {
+                const mud = document.createElement('div');
+                mud.className = 'mud-splatter';
+                mud.style.left = `${Math.random() * 80}%`;
+                mud.style.top = `${Math.random() * 60}%`;
+                mud.style.width = `${30 + Math.random() * 50}px`;
+                mud.style.height = `${30 + Math.random() * 50}px`;
+                panniStage.appendChild(mud);
+                
+                setTimeout(() => mud.remove(), 3000);
+            }
+            
+            // Button event listeners
+            btnDance.addEventListener('click', () => {
+                resetPanni();
+                panniContainer.style.animation = 'shake 1s ease-in-out';
+                currentAnimation = 'dance';
+                showSpeechBubble("I'm dancing! Oink oink!");
+            });
+            
+            btnJump.addEventListener('click', () => {
+                resetPanni();
+                panniContainer.style.animation = 'jump 0.8s ease-in-out';
+                currentAnimation = 'jump';
+                showSpeechBubble("Wheeeee! I'm flying!");
+            });
+            
+            btnSlip.addEventListener('click', () => {
+                resetPanni();
+                panniContainer.style.animation = 'slip 1.2s ease-in-out';
+                currentAnimation = 'slip';
+                showSpeechBubble("Whoooaaa! *slip*");
+                
+                setTimeout(() => {
+                    audioSplash.currentTime = 0;
+                    audioSplash.play();
+                    createMudSplatter(); // Create mud splatter when slipping
+                }, 600);
+            });
+            
+            btnFall.addEventListener('click', () => {
+                resetPanni();
+                panniContainer.style.animation = 'fall 1.5s ease-in-out';
+                currentAnimation = 'fall';
+                showSpeechBubble("Oh no! I'm falling!");
+                
+                setTimeout(() => {
+                    audioSplash.currentTime = 0;
+                    audioSplash.play();
+                    createMudSplatter(); // Create mud splatter when falling
+                    createMudSplatter(); // Create an extra one for more effect
+                }, 900);
+            });
+            
+            btnSunglasses.addEventListener('click', () => {
+                const yellowGlasses = document.querySelector('.panni-yellow-glasses');
+                const oldGlasses = document.querySelector('.panni-sunglasses');
+                
+                if (yellowGlasses.style.opacity === '1') {
+                    yellowGlasses.style.opacity = '0';
+                    oldGlasses.style.opacity = '0';
+                    showSpeechBubble("Not cool anymore? Fine!");
+                } else {
+                    yellowGlasses.style.opacity = '1';
+                    oldGlasses.style.opacity = '0'; // Ensure old glasses are hidden
+                    showSpeechBubble("Looking cool! 😎");
+                }
+            });
+            
+            btnPartyHat.addEventListener('click', () => {
+                if (panniPartyHat.style.opacity === '1') {
+                    panniPartyHat.style.opacity = '0';
+                    showSpeechBubble("Party's over? Aww!");
+                } else {
+                    panniPartyHat.style.opacity = '1';
+                    showSpeechBubble("Party time! Oink yeah!");
+                }
+            });
+            
+            btnSpeak.addEventListener('click', () => {
+                const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+                showSpeechBubble(randomPhrase);
+                
+                // Show tongue when speaking (random chance)
+                const panniTongue = document.querySelector('.panni-tongue');
+                if (Math.random() > 0.5) {
+                    panniTongue.style.display = 'block';
+                    setTimeout(() => {
+                        panniTongue.style.display = 'none';
+                    }, 2000);
+                }
+                
+                // Play laugh sound occasionally
+                if (Math.random() > 0.7) {
+                    setTimeout(() => {
+                        audioLaugh.currentTime = 0;
+                        audioLaugh.play();
+                    }, 500);
+                }
+            });
+            
+            btnEmojiRain.addEventListener('click', () => {
+                // Create 20 random emojis
+                for (let i = 0; i < 20; i++) {
+                    setTimeout(() => {
+                        const emoji = document.createElement('div');
+                        emoji.className = 'emoji-rain';
+                        emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                        emoji.style.left = `${Math.random() * 100}%`;
+                        emoji.style.animationDuration = `${2 + Math.random() * 3}s`;
+                        
+                        panniStage.appendChild(emoji);
+                        
+                        // Remove emoji after animation
+                        setTimeout(() => {
+                            emoji.remove();
+                        }, 3000);
+                    }, i * 100);
+                }
+                
+                showSpeechBubble("It's raining emojis! Fabulous!");
+            });
+            
+            // Scream button (new feature)
+            btnScream.addEventListener('click', () => {
+                resetPanni();
+                panniContainer.style.animation = 'shake 0.5s ease-in-out infinite';
+                currentAnimation = 'scream';
+                showSpeechBubble("AHHHHHH 🐷😱");
+                audioScream.play();
+                
+                // Stop shaking after 2 seconds
+                setTimeout(() => {
+                    resetPanni();
+                }, 2000);
+            });
+            
+            // Chase Carrot Game (new feature)
+            btnChase.addEventListener('click', () => {
+                resetPanni();
+                
+                if (chaseInterval) {
+                    // Stop the game if it's already running
+                    clearInterval(chaseInterval);
+                    chaseInterval = null;
+                    showSpeechBubble("Phew! Chasing carrots is hard work!");
+                    return;
+                }
+                
+                showSpeechBubble("I'm coming for that carrot! 🥕");
+                
+                // Create a carrot
+                const carrot = document.createElement('div');
+                carrot.innerHTML = '🥕';
+                carrot.style.position = 'absolute';
+                carrot.style.fontSize = '2rem';
+                carrot.style.top = '100px';
+                carrot.style.left = '70%';
+                carrot.style.zIndex = '5';
+                carrot.style.cursor = 'pointer';
+                panniStage.appendChild(carrot);
+                
+                // Make Panni chase the carrot
+                chaseInterval = setInterval(() => {
+                    const carrotPos = parseInt(carrot.style.left);
+                    const panniPos = parseInt(panniContainer.style.left) || 50;
+                    
+                    // Move carrot randomly
+                    const newCarrotPos = Math.max(10, Math.min(90, carrotPos + (Math.random() * 40 - 20)));
+                    carrot.style.left = `${newCarrotPos}%`;
+                    
+                    // Move Panni towards carrot
+                    const newPanniPos = panniPos + (newCarrotPos > panniPos ? 5 : -5);
+                    panniContainer.style.transform = `translateX(-50%) translateX(${newPanniPos}px)`;
+                    
+                    // Check if Panni caught the carrot
+                    if (Math.abs(newCarrotPos - (panniPos + 50)) < 10) {
+                        clearInterval(chaseInterval);
+                        chaseInterval = null;
+                        carrot.remove();
+                        showSpeechBubble("Yum! Got it! 🥕");
+                        setTimeout(resetPanni, 1000);
+                    }
+                }, 500);
+                
+                // End game after 15 seconds if carrot not caught
+                setTimeout(() => {
+                    if (chaseInterval) {
+                        clearInterval(chaseInterval);
+                        chaseInterval = null;
+                        carrot.remove();
+                        showSpeechBubble("Too fast for me! *pant pant*");
+                        resetPanni();
+                    }
+                }, 15000);
+            });
+            
+            // Initialize the joke of the day
+            const jokeText = document.getElementById('joke-text');
+            jokeText.textContent = jokes[Math.floor(Math.random() * jokes.length)];
+            
+            // Add joke refresh button
+            const jokeSection = document.querySelector('.joke-of-the-day');
+            const jokeRefreshBtn = document.createElement('button');
+            jokeRefreshBtn.textContent = "Tell Another Joke! 😂";
+            jokeRefreshBtn.className = "control-btn";
+            jokeRefreshBtn.style.marginTop = "1rem";
+            jokeSection.appendChild(jokeRefreshBtn);
+            
+            jokeRefreshBtn.addEventListener('click', () => {
+                const newJoke = jokes[Math.floor(Math.random() * jokes.length)];
+                jokeText.style.opacity = '0';
+                setTimeout(() => {
+                    jokeText.textContent = newJoke;
+                    jokeText.style.opacity = '1';
+                }, 300);
+                showSpeechBubble("Here's another joke for you!");
+            });
+            
+            // Exit intent detection
+            window.addEventListener('mouseleave', (e) => {
+                if (e.clientY <= 5) { // User moving cursor out of window from top
+                    showSpeechBubble("Don't leave yet! I still have jokes!");
+                }
+            });
+            
+            // Aural branding - play intro jingle but only once
+            if (!localStorage.getItem('visited')) {
+                setTimeout(() => {
+                    audioOink.play();
+                    setTimeout(() => {
+                        audioOink.play();
+                    }, 800);
+                    localStorage.setItem('visited', 'true');
+                }, 1000);
+            }
+            
+            // Add tooltips to social buttons
+            const socialButtons = document.querySelectorAll('.social-btn');
+            socialButtons.forEach(btn => {
+                btn.setAttribute('title', 'Follow for more oinks!');
+            });
+            
+            // Preload all sounds to ensure they work
+            function preloadSounds() {
+                // Create an array of all sounds
+                const sounds = [audioOink, audioSplash, audioScream, audioLaugh];
+                
+                // Function to preload a single sound
+                const preloadSound = (audio) => {
+                    return new Promise((resolve, reject) => {
+                        audio.addEventListener('canplaythrough', resolve, {once: true});
+                        audio.addEventListener('error', reject, {once: true});
+                        audio.load();
+                    });
+                };
+                
+                // Preload all sounds
+                Promise.all(sounds.map(preloadSound))
+                    .then(() => console.log('All sounds preloaded successfully'))
+                    .catch(error => console.error('Error preloading sounds:', error));
+            }
+            
+            // Call the preload function
+            preloadSounds();
+            
+            // Test sound on page load
+            setTimeout(() => {
+                audioOink.play().catch(e => {
+                    console.log('Sound failed to play automatically. User interaction needed:', e);
+                    
+                    // Add a notice for the user
+                    const soundNotice = document.createElement('div');
+                    soundNotice.style.position = 'fixed';
+                    soundNotice.style.top = '10px';
+                    soundNotice.style.left = '50%';
+                    soundNotice.style.transform = 'translateX(-50%)';
+                    soundNotice.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                    soundNotice.style.color = 'white';
+                    soundNotice.style.padding = '10px 20px';
+                    soundNotice.style.borderRadius = '5px';
+                    soundNotice.style.zIndex = '1000';
+                    soundNotice.style.cursor = 'pointer';
+                    soundNotice.textContent = 'Click here to enable sounds! 🔊';
+                    document.body.appendChild(soundNotice);
+                    
+                    // Enable sound on click
+                    soundNotice.addEventListener('click', () => {
+                        audioOink.play();
+                        soundNotice.remove();
+                    });
+                });
+            }, 1000);
+        
+            // Easter egg: Click on Panni
+            panniContainer.addEventListener('click', () => {
+                resetPanni();
+                showSpeechBubble("Hey! That tickles! Oink!");
+            });
+            
+            // Initialize with a welcome message
+            setTimeout(() => {
+                showSpeechBubble("Welcome to my site! Click the buttons below to see me in action!");
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
