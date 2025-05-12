@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Notes</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    html, body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      height: 100%;
+      width: 100%;
+      background-color: #f5f5f5;
+      overflow: hidden;
+      position: fixed;
+    }
+    
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      max-width: 95%;
+      width: 100%;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    @media (min-width: 600px) {
+      .chat-container {
+        max-width: 600px;
+        margin: 10px auto;
+        height: calc(100% - 20px);
+      }
+    }
+    
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 16px;
+      background: white;
+    }
+    
+    .sent {
+      text-align: right;
+      margin-bottom: 8px;
+      color: #2196F3;
+    }
+    
+    .received {
+      text-align: left;
+      margin-bottom: 8px;
+      color: #333;
+    }
+    
+    .input-area {
+      padding: 8px 10px;
+      background: white;
+      display: flex;
+      align-items: center;
+      border-top: 1px solid #eee;
+    }
+    
+    #message-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid #e0e0e0;
+      border-radius: 24px;
+      background: #f9f9f9;
+      outline: none;
+      font-size: 16px;
+    }
+    
+    #send-button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 24px;
+      padding: 10px 16px;
+      margin-left: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    
+    /* Fix for iOS height issues */
+    @supports (-webkit-touch-callout: none) {
+      body, html {
+        height: -webkit-fill-available;
+      }
+      .chat-container {
+        height: -webkit-fill-available;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div id="messages"></div>
+    <div class="input-area">
+      <input type="text" id="message-input" placeholder="Type a message">
+      <button id="send-button">Send</button>
+    </div>
+  </div>
+  
+
+<!-- Load Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBw-lFRPy_OIHDXneC-SHaQG0cMK6RCOeo",
+      authDomain: "family-7fa14.firebaseapp.com",
+      databaseURL: "https://family-7fa14-default-rtdb.asia-southeast1.firebasedatabase.app/",
+      projectId: "family-7fa14",
+      storageBucket: "family-7fa14.firebasestorage.app",
+      messagingSenderId: "725704438162",
+      appId: "1:725704438162:web:87a7cbad460726fa49114b"
+    };
+    
+    // Wait for the document to fully load
+    document.addEventListener('DOMContentLoaded', function() {
+      try {
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        
+        // Get database reference
+        const db = firebase.database();
+        console.log("Firebase connected successfully");
+        
+        // Generate a random user ID
+        const userId = "user_" + Math.floor(Math.random() * 1000000);
+        
+        // Reference to messages
+        const messagesRef = db.ref("simple-messages");
+        
+        // Set up UI elements
+        const messagesDiv = document.getElementById("messages");
+        const messageInput = document.getElementById("message-input");
+        const sendButton = document.getElementById("send-button");
+        
+        // Listen for messages
+        messagesRef.on("child_added", (snapshot) => {
+          try {
+            const message = snapshot.val();
+            
+            const messageElement = document.createElement("div");
+            messageElement.className = message.userId === userId ? "sent" : "received";
+            messageElement.textContent = `${message.text} (${new Date(message.timestamp).toLocaleTimeString()})`;
+            
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          } catch (error) {
+            console.error("Error displaying message:", error);
+          }
+        });
+        
+        // Send message function
+        function sendMessage() {
+          const text = messageInput.value.trim();
+          if (!text) return;
+          
+          const message = {
+            text: text,
+            userId: userId,
+            timestamp: Date.now()
+          };
+          
+                   
+          // Push to Firebase
+          messagesRef.push(message)
+            .then(() => {
+              console.log("Message sent successfully!");
+               // Clear input
+              messageInput.value = "";
+            })
+            .catch((error) => {
+              console.log(`Error sending message: ${error.message}`);
+            });
+        }
+        
+        // Event listeners
+        sendButton.addEventListener("click", sendMessage);
+        messageInput.addEventListener("keypress", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+        
+        // Check connection status
+        const connectedRef = db.ref(".info/connected");
+        connectedRef.on("value", (snap) => {
+          if (snap.val() === true) {
+            console.log("Connected to Firebase");
+          } else {
+            console.log("Disconnected from Firebase");
+          }
+        });
+        
+      } catch (error) {
+        console.error("Error setting up chat:", error);
+      }
+    });
+  </script>
+</body>
+</html>
