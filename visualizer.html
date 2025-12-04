@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hand + Audio Particle Visualizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      background: #050608;
+      color: #e5e5e5;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text", sans-serif;
+    }
+    #app {
+      position: fixed;
+      inset: 0;
+    }
+    #overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      padding: 16px 20px;
+      pointer-events: none;
+      color: #f5f5f5;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: linear-gradient(to top, rgba(5,6,8,0.9) 0%, transparent 40%);
+    }
+    #overlay > * {
+      pointer-events: auto;
+    }
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pill span.key {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.7);
+      font-size: 10px;
+    }
+
+    #status {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 260px;
+    }
+    #status-line {
+      font-size: 11px;
+      opacity: 0.7;
+    }
+    #gain-meter {
+      width: 120px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.08);
+      overflow: hidden;
+      position: relative;
+    }
+    #gain-meter-bar {
+      position: absolute;
+      inset: 0;
+      width: 0%;
+      background: linear-gradient(90deg, #2dd4bf, #22c55e, #eab308, #ef4444);
+      transition: width 60ms linear;
+    }
+    #controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button {
+      pointer-events: auto;
+      cursor: pointer;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: rgba(0,0,0,0.85);
+      color: #f9fafb;
+      font-size: 11px;
+      padding: 6px 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    button:disabled {
+      opacity: 0.35;
+      cursor: default;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="overlay">
+    <div id="status">
+      <div class="pill">
+        <span>Hand + Audio Particle Engine</span>
+      </div>
+      <div id="status-line">Init…</div>
+      <div id="gain-meter"><div id="gain-meter-bar"></div></div>
+    </div>
+    <div id="controls">
+      <div class="pill">
+        <span class="key">A</span><span>Arm / Disarm audio</span>
+      </div>
+      <div class="pill">
+        <span class="key">H</span><span>Toggle hand tracking</span>
+      </div>
+      <button id="btn-audio">Enable Audio</button>
+      <button id="btn-hands">Enable Hands</button>
+    </div>
+  </div>
+
+  <!-- Three.js & optional postprocessing (use CDN or your bundler) -->
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.164.0/build/three.module.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.164.0/examples/jsm/controls/OrbitControls.js';
+
+    // NOTE: If you use mediapipe:
+    // import { Hands } from 'https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/hands.js';
+
+    // === CONFIG ============================================================
+    const Config = {
+      audio: {
+        fftSize: 2048,
+        smoothingTimeConstant: 0.7,
+        minDecibels: -90,
+        maxDecibels: -10,
+        gainFalloff: 0.92,          // smoothing for UI meter
+        bands: {
+          low:   [20, 200],
+          mid:   [200, 2000],
+          high:  [2000, 12000],
+        },
+      },
+      particles: {
+        count: 30000,
+        size: 0.06,
+        baseRadius: 4.0,
+        noiseScale: 0.7,
+        noiseSpeed: 0.6,
+        handAttractionStrength: 1.75,
+        audioDisplacement: 1.4,
+        maxInstances: 60000,
+      },
+      render: {
+        bloom: false,        // you can add postprocessing later
+        pixelRatioMax: 2.0,
+      },
+      debug: {
+        logAudioErrors: true,
+        logHandErrors: true,
+      },
+    };
+
+    // === UTILITIES =========================================================
+    const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+    const lerp = (a, b, t) => a + (b - a) * t;
+
+    // === AUDIO ANALYZER MODULE =============================================
+    class AudioAnalyzer {
+      constructor(config) {
+        this.config = config;
+        this.ctx = null;
+        this.analyser = null;
+        this.freqData = null;
+        this.isActive = false;
+        this.lastGain = 0;
+      }
+
+      async init() {
+        if (this.ctx) return; // already init
+        try {
+          this.ctx = new AudioContext({ latencyHint: 'interactive' });
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+          const source = this.ctx.createMediaStreamSource(stream);
+
+          this.analyser = this.ctx.createAnalyser();
+          this.analyser.fftSize = this.config.fftSize;
+          this.analyser.smoothingTimeConstant = this.config.smoothingTimeConstant;
+          this.analyser.minDecibels = this.config.minDecibels;
+          this.analyser.maxDecibels = this.config.maxDecibels;
+
+          this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
+          source.connect(this.analyser);
+          this.isActive = true;
+        } catch (err) {
+          if (Config.debug.logAudioErrors) console.error('Audio init error', err);
+          this.isActive = false;
+          throw err;
+        }
+      }
+
+      toggleSuspendResume() {
+        if (!this.ctx) return;
+        if (this.ctx.state === 'running') {
+          this.ctx.suspend();
+          this.isActive = false;
+        } else if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+          this.isActive = true;
+        }
+      }
+
+      getBands() {
+        if (!this.analyser || !this.isActive) {
+          return { low: 0, mid: 0, high: 0, overall: this.lastGain * this.config.gainFalloff };
+        }
+        this.analyser.getByteFrequencyData(this.freqData);
+
+        const nyquist = this.ctx.sampleRate / 2;
+        const bandAmplitude = (range) => {
+          const [minF, maxF] = range;
+          const minIndex = Math.floor((minF / nyquist) * this.freqData.length);
+          const maxIndex = Math.floor((maxF / nyquist) * this.freqData.length);
+          let sum = 0;
+          let count = 0;
+          for (let i = minIndex; i <= maxIndex; i++) {
+            sum += this.freqData[i];
+            count++;
+          }
+          return count > 0 ? sum / (count * 255) : 0;
+        };
+
+        const low  = bandAmplitude(this.config.bands.low);
+        const mid  = bandAmplitude(this.config.bands.mid);
+        const high = bandAmplitude(this.config.bands.high);
+        const overall = clamp((low + mid + high) / 3, 0, 1);
+
+        // Smooth overall for UI
+        this.lastGain = lerp(this.lastGain, overall, 1 - this.config.gainFalloff);
+        return { low, mid, high, overall: this.lastGain };
+      }
+    }
+
+    // === HAND TRACKER MODULE (ABSTRACT) =====================================
+    class HandTracker {
+      constructor() {
+        this.isActive = false;
+        this.handPoints = []; // world-space or normalized coordinates per frame
+      }
+
+      async init() {
+        // You can plug in MediaPipe or WebXR here.
+        // For now we leave a stub that just exposes an API.
+        // E.g.:
+        // this.hands = new Hands({...});
+        // this.hands.onResults(this.onResults.bind(this));
+        this.isActive = false;
+      }
+
+      toggleActive() {
+        this.isActive = !this.isActive;
+      }
+
+      update(delta) {
+        // If using MediaPipe, you'd update the current positions here.
+        // For now, we leave this as a stub.
+      }
+
+      /**
+       * Returns 0..N “influence” points in 3D that particles can react to.
+       * In a real implementation, convert camera‑space hand joints to
+       * world‑space coordinates using the projection matrix.
+       */
+      getInfluencePoints() {
+        return this.handPoints; // array of THREE.Vector3
+      }
+    }
+
+    // === PARTICLE SYSTEM MODULE ==============================================
+    class ParticleSystem {
+      constructor(scene, config, audioAnalyzer, handTracker) {
+        this.scene = scene;
+        this.config = config;
+        this.audio = audioAnalyzer;
+        this.hands = handTracker;
+        this.time = 0;
+
+        this.geometry = null;
+        this.material = null;
+        this.points = null;
+
+        this._allocate();
+      }
+
+      _allocate() {
+        const count = Math.min(this.config.count, this.config.maxInstances);
+        const positions = new Float32Array(count * 3);
+        const offsets   = new Float32Array(count * 3); // e.g. per‑particle noise offset
+
+        const radius = this.config.baseRadius;
+
+        for (let i = 0; i < count; i++) {
+          const i3 = i * 3;
+          // random point on sphere shell
+          const u = Math.random();
+          const v = Math.random();
+          const theta = 2 * Math.PI * u;
+          const phi   = Math.acos(2 * v - 1);
+          const r     = radius * (0.5 + Math.random() * 0.5);
+
+          positions[i3 + 0] = r * Math.sin(phi) * Math.cos(theta);
+          positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+          positions[i3 + 2] = r * Math.cos(phi);
+
+          offsets[i3 + 0] = Math.random() * 1000;
+          offsets[i3 + 1] = Math.random() * 1000;
+          offsets[i3 + 2] = Math.random() * 1000;
+        }
+
+        this.geometry = new THREE.BufferGeometry();
+        this.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.geometry.setAttribute('offset',   new THREE.BufferAttribute(offsets, 3));
+
+        const vertexShader = /* glsl */`
+          uniform float uTime;
+          uniform float uAudioOverall;
+          uniform vec3  uAudioBands; // x=low, y=mid, z=high
+          uniform float uBaseRadius;
+          uniform float uNoiseScale;
+          uniform float uNoiseSpeed;
+          uniform float uAudioDisplacement;
+          uniform vec3  uHandPoints[4];
+          uniform int   uHandCount;
+          attribute vec3 offset;
+          varying float vStrength;
+
+          // Simple 3D noise – replace with a proper noise if using a library
+          float hash(vec3 p) {
+            p = vec3(dot(p, vec3(127.1, 311.7, 74.7)),
+                     dot(p, vec3(269.5, 183.3, 246.1)),
+                     dot(p, vec3(113.5, 271.9, 124.6)));
+            return fract(sin(p.x + p.y + p.z) * 43758.5453123);
+          }
+
+          void main() {
+            vec3 pos = position;
+
+            float t = uTime * uNoiseSpeed;
+            float n = hash(offset + t);
+            float audioPush = uAudioOverall * uAudioDisplacement * (0.5 + 0.5 * n);
+            vec3 dir = normalize(pos);
+            pos += dir * audioPush;
+
+            // Hand influence – pull particles toward nearest hand point
+            float handStrength = 0.0;
+            if (uHandCount > 0) {
+              float minD = 99999.0;
+              vec3 nearest = pos;
+              for (int i = 0; i < 4; i++) {
+                if (i >= uHandCount) break;
+                vec3 hp = uHandPoints[i];
+                float d = distance(pos, hp);
+                if (d < minD) {
+                  minD = d;
+                  nearest = hp;
+                }
+              }
+              float attenuation = clamp(1.0 - minD / (uBaseRadius * 1.5), 0.0, 1.0);
+              handStrength = attenuation;
+              pos = mix(pos, nearest, attenuation * 0.65);
+            }
+
+            vStrength = uAudioOverall * 0.8 + handStrength * 0.5 + uAudioBands.z * 0.3;
+
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            gl_PointSize = mix(1.2, 5.0, vStrength) * (300.0 / -mvPosition.z);
+          }
+        `;
+
+        const fragmentShader = /* glsl */`
+          precision highp float;
+          varying float vStrength;
+
+          void main() {
+            vec2 uv = gl_PointCoord * 2.0 - 1.0;
+            float r = dot(uv, uv);
+            if (r > 1.0) discard;
+            float alpha = smoothstep(1.0, 0.0, r) * (0.2 + 0.8 * vStrength);
+            vec3 color = mix(vec3(0.08, 0.9, 0.95), vec3(0.99, 0.2, 0.4), vStrength);
+            gl_FragColor = vec4(color, alpha);
+          }
+        `;
+
+        this.material = new THREE.ShaderMaterial({
+          transparent: true,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          uniforms: {
+            uTime:             { value: 0 },
+            uAudioOverall:     { value: 0 },
+            uAudioBands:       { value: new THREE.Vector3() },
+            uBaseRadius:       { value: this.config.baseRadius },
+            uNoiseScale:       { value: this.config.noiseScale },
+            uNoiseSpeed:       { value: this.config.noiseSpeed },
+            uAudioDisplacement:{ value: this.config.audioDisplacement },
+            uHandPoints:       { value: [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()] },
+            uHandCount:        { value: 0 },
+          },
+        });
+
+        this.points = new THREE.Points(this.geometry, this.material);
+        this.scene.add(this.points);
+      }
+
+      update(delta) {
+        this.time += delta;
+        this.material.uniforms.uTime.value = this.time;
+
+        // Audio
+        const bands = this.audio.getBands();
+        this.material.uniforms.uAudioOverall.value = bands.overall;
+        this.material.uniforms.uAudioBands.value.set(bands.low, bands.mid, bands.high);
+
+        // Hand influence
+        const handPoints = this.hands.getInfluencePoints() || [];
+        const maxHands = 4;
+        const arr = this.material.uniforms.uHandPoints.value;
+        const count = Math.min(handPoints.length, maxHands);
+        for (let i = 0; i < maxHands; i++) {
+          if (i < count) {
+            arr[i].copy(handPoints[i]);
+          } else {
+            arr[i].set(0, 0, 0);
+          }
+        }
+        this.material.uniforms.uHandCount.value = count;
+      }
+    }
+
+    // === SCENE / RENDERER SETUP =============================================
+    const container = document.getElementById('app');
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+      alpha: false,
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, Config.render.pixelRatioMax));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x050608, 1);
+    container.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x050608, 0.08);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.set(0, 0, 10);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.09;
+    controls.enablePan = false;
+    controls.minDistance = 4;
+    controls.maxDistance = 22;
+
+    // Subtle light for future geometry
+    const light = new THREE.DirectionalLight(0xffffff, 0.3);
+    light.position.set(5, 10, 8);
+    scene.add(light);
+
+    // === MODULE INSTANCES ====================================================
+    const audioAnalyzer = new AudioAnalyzer(Config.audio);
+    const handTracker   = new HandTracker();
+    const particleSystem = new ParticleSystem(scene, Config.particles, audioAnalyzer, handTracker);
+
+    // === UI / STATUS =========================================================
+    const statusLine = document.getElementById('status-line');
+    const gainBar = document.getElementById('gain-meter-bar');
+    const btnAudio = document.getElementById('btn-audio');
+    const btnHands = document.getElementById('btn-hands');
+
+    function setStatus(text) {
+      statusLine.textContent = text;
+    }
+
+    async function initAudio() {
+      try {
+        await audioAnalyzer.init();
+        setStatus('Audio armed. Speak or play music.');
+        btnAudio.textContent = 'Audio On (A)';
+      } catch (e) {
+        setStatus('Audio init failed (check permissions).');
+        btnAudio.disabled = true;
+      }
+    }
+
+    async function initHands() {
+      try {
+        await handTracker.init();
+        handTracker.toggleActive();
+        setStatus('Hand tracking enabled.');
+        btnHands.textContent = 'Hands On (H)';
+      } catch (e) {
+        setStatus('Hand tracking unavailable on this device.');
+        btnHands.disabled = true;
+      }
+    }
+
+    btnAudio.addEventListener('click', () => {
+      if (!audioAnalyzer.ctx) {
+        initAudio();
+      } else {
+        audioAnalyzer.toggleSuspendResume();
+        if (audioAnalyzer.isActive) {
+          setStatus('Audio running.');
+          btnAudio.textContent = 'Audio On (A)';
+        } else {
+          setStatus('Audio suspended.');
+          btnAudio.textContent = 'Audio Off (A)';
+        }
+      }
+    });
+
+    btnHands.addEventListener('click', () => {
+      if (!handTracker.isActive) {
+        initHands();
+      } else {
+        handTracker.toggleActive();
+        setStatus(handTracker.isActive ? 'Hand tracking enabled.' : 'Hand tracking disabled.');
+        btnHands.textContent = handTracker.isActive ? 'Hands On (H)' : 'Hands Off (H)';
+      }
+    });
+
+    window.addEventListener('keydown', (ev) => {
+      if (ev.key === 'a' || ev.key === 'A') {
+        btnAudio.click();
+      } else if (ev.key === 'h' || ev.key === 'H') {
+        btnHands.click();
+      }
+    });
+
+    // === RENDER LOOP =========================================================
+    let lastTime = performance.now();
+    function onResize() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+      renderer.setSize(w, h);
+    }
+    window.addEventListener('resize', onResize);
+
+    function renderLoop(now) {
+      requestAnimationFrame(renderLoop);
+      const dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+
+      controls.update();
+      handTracker.update(dt);
+      particleSystem.update(dt);
+
+      // UI gain meter
+      const bands = audioAnalyzer.getBands();
+      gainBar.style.width = `${(bands.overall * 100).toFixed(1)}%`;
+
+      renderer.render(scene, camera);
+    }
+
+    setStatus('Press A to enable audio. Press H for hand tracking.');
+    requestAnimationFrame(renderLoop);
+  </script>
+</body>
+</html>
