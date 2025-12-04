@@ -3,349 +3,1201 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Particle System</title>
+    <title>Pro Audio-Visual Particle Engine | Production Grade</title>
     <style>
-        body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
-        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
-        /* Hidden video element for processing */
-        #input-video { display: none; }
+        :root {
+            --primary: #00ffff;
+            --secondary: #ff00ff;
+            --bg: #0a0a0f;
+            --glass: rgba(15, 15, 25, 0.85);
+            --border: rgba(255, 255, 255, 0.12);
+        }
         
-        /* Loading overlay */
-        #loading {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: white; z-index: 10; pointer-events: none; font-size: 1.2rem;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg);
+            color: #f0f0f0;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        #canvas-container {
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+        }
+        
+        #video-input {
+            display: none;
+        }
+        
+        /* HUD Overlay */
+        #hud {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: clamp(16px, 2vw, 32px);
+        }
+        
+        .hud-section {
+            pointer-events: auto;
+        }
+        
+        /* Top Bar */
+        #top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .hud-panel {
+            background: var(--glass);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 16px 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+        
+        .title-block h1 {
+            font-size: clamp(18px, 2.5vw, 24px);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 4px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .title-block p {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        /* Performance Monitor */
+        #perf-monitor {
+            font-size: 11px;
+            font-family: 'SF Mono', 'Monaco', monospace;
+            line-height: 1.6;
+        }
+        
+        #perf-monitor div {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        
+        #perf-monitor .label {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        #perf-monitor .value {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        /* Audio Visualizer */
+        #audio-viz {
+            display: flex;
+            align-items: flex-end;
+            gap: 3px;
+            height: 48px;
+            padding: 8px 0;
+        }
+        
+        .audio-bar {
+            flex: 1;
+            background: linear-gradient(to top, var(--primary), var(--secondary));
+            border-radius: 2px;
+            transition: height 50ms ease-out;
+            min-width: 4px;
+            opacity: 0.8;
+        }
+        
+        /* Control Panel */
+        #controls {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 10px 18px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn:hover:not(:disabled) {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+        
+        .btn:active:not(:disabled) {
+            transform: translateY(0);
+        }
+        
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+        
+        .btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-color: transparent;
+            color: #000;
+            font-weight: 600;
+        }
+        
+        .btn-icon {
+            width: 16px;
+            height: 16px;
+        }
+        
+        /* Preset Selector */
+        #preset-selector {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .preset-btn {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preset-btn:hover {
+            color: #fff;
+            border-color: var(--primary);
+        }
+        
+        .preset-btn.active {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+        
+        /* Loading Screen */
+        #loading-screen {
+            position: fixed;
+            inset: 0;
+            background: var(--bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        #loading-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loader {
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        #loading-text {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
             text-align: center;
+        }
+        
+        #loading-progress {
+            font-size: 12px;
+            color: var(--primary);
+            font-family: monospace;
+        }
+        
+        /* Status Messages */
+        #status-toast {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 24px;
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 13px;
+        }
+        
+        #status-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            #top-bar {
+                flex-direction: column;
+            }
+            
+            #perf-monitor {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div id="loading">Initializing AI & Graphics...<br>Please allow Camera/Mic access.</div>
-    <div id="canvas-container"></div>
-    <video id="input-video" playsinline></video>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+        <div class="loader"></div>
+        <div id="loading-text">Initializing Neural Engine & GPU Pipeline...</div>
+        <div id="loading-progress">0%</div>
+    </div>
 
-    <!-- Import Map for Clean Module Loading -->
+    <!-- Canvas Container -->
+    <div id="canvas-container"></div>
+    
+    <!-- Hidden Video for MediaPipe -->
+    <video id="video-input" playsinline autoplay muted></video>
+
+    <!-- HUD Overlay -->
+    <div id="hud">
+        <div id="top-bar" class="hud-section">
+            <div class="hud-panel title-block">
+                <h1>Particle Core Engine</h1>
+                <p>Military-Grade Audio-Visual System</p>
+            </div>
+            
+            <div class="hud-panel" id="perf-monitor">
+                <div><span class="label">FPS:</span><span class="value" id="fps">--</span></div>
+                <div><span class="label">Particles:</span><span class="value" id="particle-count">--</span></div>
+                <div><span class="label">Hands:</span><span class="value" id="hand-count">--</span></div>
+                <div><span class="label">Audio:</span><span class="value" id="audio-level">--</span></div>
+            </div>
+            
+            <div class="hud-panel">
+                <div id="audio-viz"></div>
+            </div>
+        </div>
+        
+        <div class="hud-section">
+            <div class="hud-panel">
+                <div id="preset-selector">
+                    <button class="preset-btn active" data-preset="ambient">Ambient</button>
+                    <button class="preset-btn" data-preset="energy">Energy</button>
+                    <button class="preset-btn" data-preset="bass">Bass Heavy</button>
+                    <button class="preset-btn" data-preset="ethereal">Ethereal</button>
+                    <button class="preset-btn" data-preset="chaos">Chaos</button>
+                </div>
+            </div>
+            
+            <div class="hud-panel">
+                <div id="controls">
+                    <button class="btn" id="btn-audio">
+                        <span>🎤</span> Enable Audio
+                    </button>
+                    <button class="btn" id="btn-hands">
+                        <span>✋</span> Enable Hands
+                    </button>
+                    <button class="btn" id="btn-fullscreen">
+                        <span>⛶</span> Fullscreen
+                    </button>
+                    <button class="btn" id="btn-postfx">
+                        <span>✨</span> FX: ON
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Toast -->
+    <div id="status-toast"></div>
+
+    <!-- Import Maps for ES Modules -->
     <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
-                "@mediapipe/hands": "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js",
-                "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
-            }
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/",
+            "postprocessing": "https://cdn.jsdelivr.net/npm/postprocessing@6.35.3/build/index.js"
         }
+    }
     </script>
 
-    <!-- External Libraries for MediaPipe (Pre-load) -->
+    <!-- MediaPipe Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 
+    <!-- Main Application -->
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import GUI from 'lil-gui';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+        import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
-        // --- Configuration & State ---
-        const config = {
-            particleCount: 15000,
-            particleSize: 2,
-            handInteractionRadius: 30,
-            handForce: 2.0, // Positive = Repel, Negative = Attract
-            audioSensitivity: 2.5,
-            audioEnabled: false,
-            selectedCamera: null
+        // =====================================================================
+        // CONFIGURATION PRESETS
+        // =====================================================================
+        
+        const PRESETS = {
+            ambient: {
+                particleCount: 50000,
+                particleSize: 0.04,
+                audioSensitivity: 0.8,
+                handInfluence: 1.2,
+                colorScheme: [0x00ffff, 0xff00ff, 0xffff00],
+                noiseScale: 0.5,
+                flowSpeed: 0.3,
+                bloomStrength: 1.5,
+            },
+            energy: {
+                particleCount: 80000,
+                particleSize: 0.03,
+                audioSensitivity: 1.5,
+                handInfluence: 2.0,
+                colorScheme: [0xff0066, 0x00ff99, 0xff9900],
+                noiseScale: 0.8,
+                flowSpeed: 0.8,
+                bloomStrength: 2.0,
+            },
+            bass: {
+                particleCount: 60000,
+                particleSize: 0.05,
+                audioSensitivity: 2.0,
+                handInfluence: 1.5,
+                colorScheme: [0xff0000, 0xff6600, 0xffcc00],
+                noiseScale: 1.2,
+                flowSpeed: 0.5,
+                bloomStrength: 2.5,
+            },
+            ethereal: {
+                particleCount: 100000,
+                particleSize: 0.02,
+                audioSensitivity: 0.6,
+                handInfluence: 0.8,
+                colorScheme: [0x66ccff, 0xcc99ff, 0xffccff],
+                noiseScale: 0.3,
+                flowSpeed: 0.2,
+                bloomStrength: 1.2,
+            },
+            chaos: {
+                particleCount: 120000,
+                particleSize: 0.025,
+                audioSensitivity: 2.5,
+                handInfluence: 3.0,
+                colorScheme: [0xff00ff, 0x00ffff, 0xffff00],
+                noiseScale: 1.5,
+                flowSpeed: 1.2,
+                bloomStrength: 3.0,
+            }
         };
 
-        const state = {
-            handPosition: new THREE.Vector3(-9999, -9999, -9999), // Start off-screen
-            isHandDetected: false,
-            audioVolume: 0,
-            time: 0
-        };
-
-        // --- Three.js Setup ---
-        const scene = new THREE.Scene();
-        scene.fog = new THREE.FogExp2(0x000000, 0.002);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 100;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        document.getElementById('canvas-container').appendChild(renderer.domElement);
-
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-
-        // --- Particle System ---
-        const geometry = new THREE.BufferGeometry();
-        const positions = new Float32Array(config.particleCount * 3);
-        const originalPositions = new Float32Array(config.particleCount * 3);
-        const colors = new Float32Array(config.particleCount * 3);
-        const randoms = new Float32Array(config.particleCount); // For phase variation
-
-        const color1 = new THREE.Color(0x00ffff); // Cyan
-        const color2 = new THREE.Color(0xff00ff); // Magenta
-
-        for (let i = 0; i < config.particleCount; i++) {
-            // Sphere distribution
-            const theta = Math.random() * Math.PI * 2;
-            const phi = Math.acos((Math.random() * 2) - 1);
-            const r = 40 + Math.random() * 40;
-
-            const x = r * Math.sin(phi) * Math.cos(theta);
-            const y = r * Math.sin(phi) * Math.sin(theta);
-            const z = r * Math.cos(phi);
-
-            positions[i * 3] = x;
-            positions[i * 3 + 1] = y;
-            positions[i * 3 + 2] = z;
-
-            originalPositions[i * 3] = x;
-            originalPositions[i * 3 + 1] = y;
-            originalPositions[i * 3 + 2] = z;
-
-            randoms[i] = Math.random();
-
-            // Gradient color
-            const mixedColor = color1.clone().lerp(color2, Math.random());
-            colors[i * 3] = mixedColor.r;
-            colors[i * 3 + 1] = mixedColor.g;
-            colors[i * 3 + 2] = mixedColor.b;
-        }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-        const material = new THREE.PointsMaterial({
-            size: config.particleSize,
-            vertexColors: true,
-            blending: THREE.AdditiveBlending,
-            depthWrite: false,
-            transparent: true,
-            opacity: 0.8
-        });
-
-        const particles = new THREE.Points(geometry, material);
-        scene.add(particles);
-
-        // --- MediaPipe Hand Tracking ---
-        const videoElement = document.getElementById('input-video');
-        let cameraFeed = null;
-
-        const hands = new Hands({locateFile: (file) => {
-            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
-        }});
-
-        hands.setOptions({
-            maxNumHands: 1,
-            modelComplexity: 1,
-            minDetectionConfidence: 0.5,
-            minTrackingConfidence: 0.5
-        });
-
-        hands.onResults((results) => {
-            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
-                state.isHandDetected = true;
-                const landmarks = results.multiHandLandmarks[0];
-                
-                // Track Index Finger Tip (Landmark 8) and Palm (Landmark 9)
-                // Map 2D video coordinates (0-1) to 3D world space approx (-50 to 50)
-                const x = (0.5 - landmarks[9].x) * 150; // Invert X for mirror effect
-                const y = (0.5 - landmarks[9].y) * 100;
-                
-                // Simple smoothing
-                state.handPosition.lerp(new THREE.Vector3(x, y, 0), 0.1);
-            } else {
-                state.isHandDetected = false;
-            }
-        });
-
-        // --- Audio Analysis ---
-        let audioContext, analyser, dataArray, microphone;
+        // =====================================================================
+        // CORE ENGINE CLASS
+        // =====================================================================
         
-        async function initAudio() {
-            if(audioContext) return; // Already running
-            try {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 256; // Tradeoff between resolution and speed
+        class ParticleEngine {
+            constructor() {
+                this.config = { ...PRESETS.ambient };
+                this.isInitialized = false;
+                this.clock = new THREE.Clock();
+                this.frameCount = 0;
+                this.lastFPSUpdate = 0;
+                this.fps = 0;
                 
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-                microphone = audioContext.createMediaStreamSource(stream);
-                microphone.connect(analyser);
+                // Modules
+                this.renderer = null;
+                this.scene = null;
+                this.camera = null;
+                this.controls = null;
+                this.composer = null;
+                this.particleSystem = null;
+                this.audioAnalyzer = null;
+                this.handTracker = null;
                 
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
-            } catch(e) {
-                console.error("Audio init failed", e);
-                alert("Microphone access denied or failed.");
+                // State
+                this.audioEnabled = false;
+                this.handsEnabled = false;
+                this.postFXEnabled = true;
+                this.handLandmarks = [];
+                this.audioBands = { low: 0, mid: 0, high: 0, overall: 0 };
             }
-        }
 
-        function getAudioVolume() {
-            if (!config.audioEnabled || !analyser) return 0;
-            analyser.getByteFrequencyData(dataArray);
-            
-            // Calculate average volume
-            let sum = 0;
-            for(let i = 0; i < dataArray.length; i++) {
-                sum += dataArray[i];
-            }
-            const average = sum / dataArray.length;
-            return average; // 0 to 255
-        }
-
-        // --- GUI & Camera Management ---
-        const gui = new GUI({ title: 'Settings' });
-        
-        // 1. Particle Settings
-        const particleFolder = gui.addFolder('Particles');
-        particleFolder.add(config, 'handForce', -5, 5).name('Hand Force');
-        particleFolder.add(config, 'handInteractionRadius', 10, 100).name('Radius');
-        particleFolder.add(material, 'size', 0.5, 5).name('Base Size');
-
-        // 2. Audio Settings
-        const audioFolder = gui.addFolder('Audio Reactivity');
-        audioFolder.add(config, 'audioSensitivity', 0.1, 5).name('Sensitivity');
-        audioFolder.add(config, 'audioEnabled').name('Enable Mic').onChange(async (val) => {
-            if(val) {
-                await initAudio();
-                if(audioContext && audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-            }
-        });
-
-        // 3. Camera Settings
-        const cameraFolder = gui.addFolder('Camera Selection');
-        
-        async function getCameras() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            const options = {};
-            videoDevices.forEach(device => {
-                options[device.label || `Camera ${Object.keys(options).length + 1}`] = device.deviceId;
-            });
-            return options;
-        }
-
-        async function startCamera(deviceId) {
-            if (cameraFeed) await cameraFeed.stop();
-            
-            // Create MediaPipe Camera Utils instance
-            cameraFeed = new Camera(videoElement, {
-                onFrame: async () => {
-                    await hands.send({image: videoElement});
-                },
-                width: 640,
-                height: 480,
-                deviceId: deviceId ? { exact: deviceId } : undefined
-            });
-            
-            cameraFeed.start()
-                .then(() => document.getElementById('loading').style.display = 'none')
-                .catch(err => console.error("Camera start error:", err));
-        }
-
-        getCameras().then(cameraOptions => {
-            // Default to first camera
-            const firstCamId = Object.values(cameraOptions)[0];
-            config.selectedCamera = firstCamId;
-
-            cameraFolder.add(config, 'selectedCamera', cameraOptions).name('Device').onChange((deviceId) => {
-                startCamera(deviceId);
-            });
-            
-            // Initial Start
-            startCamera(firstCamId);
-        });
-
-
-        // --- Animation Loop ---
-        const clock = new THREE.Clock();
-
-        function animate() {
-            requestAnimationFrame(animate);
-
-            const time = clock.getElapsedTime();
-            state.time = time;
-
-            // 1. Process Audio
-            let volume = getAudioVolume(); // 0 - 255
-            let normVolume = volume / 255;
-            
-            // 2. Update Particles
-            const posAttr = geometry.attributes.position;
-            
-            for (let i = 0; i < config.particleCount; i++) {
-                const px = originalPositions[i * 3];
-                const py = originalPositions[i * 3 + 1];
-                const pz = originalPositions[i * 3 + 2];
-
-                // Basic floating animation (noise-like)
-                const drift = Math.sin(time * 0.5 + randoms[i] * 10) * 2;
+            async init() {
+                this.showLoading('Initializing WebGL renderer...', 10);
+                this.initRenderer();
                 
-                let cx = px + Math.cos(time * 0.2 + py * 0.05) * 2;
-                let cy = py + Math.sin(time * 0.2 + px * 0.05) * 2;
-                let cz = pz + drift;
+                this.showLoading('Building scene...', 30);
+                this.initScene();
+                
+                this.showLoading('Creating particle system...', 50);
+                this.initParticleSystem();
+                
+                this.showLoading('Setting up postprocessing...', 70);
+                this.initPostProcessing();
+                
+                this.showLoading('Initializing audio analyzer...', 85);
+                this.initAudioAnalyzer();
+                
+                this.showLoading('Ready!', 100);
+                
+                this.initUI();
+                this.initControls();
+                this.initEventListeners();
+                
+                setTimeout(() => {
+                    document.getElementById('loading-screen').classList.add('hidden');
+                    this.showToast('System ready. Enable audio and hand tracking to begin.');
+                }, 500);
+                
+                this.isInitialized = true;
+                this.animate();
+            }
 
-                // Audio Reactivity (Pulse outward based on volume)
-                if (config.audioEnabled) {
-                    const audioBoost = normVolume * config.audioSensitivity * 10;
-                    cx *= (1 + normVolume * 0.2);
-                    cy *= (1 + normVolume * 0.2);
-                    cz *= (1 + normVolume * 0.2);
+            showLoading(text, progress) {
+                document.getElementById('loading-text').textContent = text;
+                document.getElementById('loading-progress').textContent = `${progress}%`;
+            }
+
+            initRenderer() {
+                const container = document.getElementById('canvas-container');
+                
+                this.renderer = new THREE.WebGLRenderer({
+                    antialias: true,
+                    alpha: false,
+                    powerPreference: 'high-performance',
+                    stencil: false,
+                    depth: true
+                });
+                
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setClearColor(0x0a0a0f, 1);
+                this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+                this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+                this.renderer.toneMappingExposure = 1.0;
+                
+                container.appendChild(this.renderer.domElement);
+            }
+
+            initScene() {
+                this.scene = new THREE.Scene();
+                this.scene.fog = new THREE.FogExp2(0x0a0a0f, 0.05);
+                
+                this.camera = new THREE.PerspectiveCamera(
+                    70,
+                    window.innerWidth / window.innerHeight,
+                    0.1,
+                    1000
+                );
+                this.camera.position.set(0, 0, 15);
+                
+                // Ambient light for future geometry
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+                this.scene.add(ambientLight);
+                
+                // Directional light
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                dirLight.position.set(10, 10, 10);
+                this.scene.add(dirLight);
+            }
+
+            initControls() {
+                this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+                this.controls.enablePan = false;
+                this.controls.minDistance = 5;
+                this.controls.maxDistance = 50;
+                this.controls.maxPolarAngle = Math.PI;
+            }
+
+            initParticleSystem() {
+                const count = this.config.particleCount;
+                const geometry = new THREE.BufferGeometry();
+                
+                // Attributes
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+                const sizes = new Float32Array(count);
+                const phases = new Float32Array(count);
+                
+                // Initialize particles in a sphere
+                const radius = 8;
+                for (let i = 0; i < count; i++) {
+                    const i3 = i * 3;
                     
-                    // Jitter
-                    cx += (Math.random() - 0.5) * audioBoost;
-                    cy += (Math.random() - 0.5) * audioBoost;
-                    cz += (Math.random() - 0.5) * audioBoost;
+                    // Spherical distribution
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(Math.random() * 2 - 1);
+                    const r = radius * (0.5 + Math.random() * 0.5);
+                    
+                    positions[i3] = r * Math.sin(phi) * Math.cos(theta);
+                    positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+                    positions[i3 + 2] = r * Math.cos(phi);
+                    
+                    // Random color from scheme
+                    const colorIndex = Math.floor(Math.random() * this.config.colorScheme.length);
+                    const color = new THREE.Color(this.config.colorScheme[colorIndex]);
+                    colors[i3] = color.r;
+                    colors[i3 + 1] = color.g;
+                    colors[i3 + 2] = color.b;
+                    
+                    sizes[i] = Math.random() * this.config.particleSize + this.config.particleSize * 0.5;
+                    phases[i] = Math.random() * Math.PI * 2;
                 }
-
-                // Hand Interaction
-                if (state.isHandDetected) {
-                    // Create a vector for the current particle
-                    const pVec = new THREE.Vector3(cx, cy, cz);
-                    const distance = pVec.distanceTo(state.handPosition);
-
-                    if (distance < config.handInteractionRadius) {
-                        // Calculate direction from hand to particle
-                        const dir = new THREE.Vector3().subVectors(pVec, state.handPosition).normalize();
+                
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                geometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+                geometry.setAttribute('phase', new THREE.BufferAttribute(phases, 1));
+                
+                // Custom shader material
+                const material = new THREE.ShaderMaterial({
+                    uniforms: {
+                        uTime: { value: 0 },
+                        uAudioLow: { value: 0 },
+                        uAudioMid: { value: 0 },
+                        uAudioHigh: { value: 0 },
+                        uAudioOverall: { value: 0 },
+                        uHandPositions: { value: [] },
+                        uHandCount: { value: 0 },
+                        uNoiseScale: { value: this.config.noiseScale },
+                        uFlowSpeed: { value: this.config.flowSpeed },
+                        uHandInfluence: { value: this.config.handInfluence },
+                        uAudioSensitivity: { value: this.config.audioSensitivity },
+                        uPixelRatio: { value: this.renderer.getPixelRatio() }
+                    },
+                    vertexShader: `
+                        uniform float uTime;
+                        uniform float uAudioLow;
+                        uniform float uAudioMid;
+                        uniform float uAudioHigh;
+                        uniform float uAudioOverall;
+                        uniform vec3 uHandPositions[10];
+                        uniform int uHandCount;
+                        uniform float uNoiseScale;
+                        uniform float uFlowSpeed;
+                        uniform float uHandInfluence;
+                        uniform float uAudioSensitivity;
+                        uniform float uPixelRatio;
                         
-                        // Force calculation (linear falloff)
-                        const forceMagnitude = (config.handInteractionRadius - distance) / config.handInteractionRadius;
+                        attribute float size;
+                        attribute float phase;
+                        attribute vec3 color;
                         
-                        // Apply push/pull
-                        cx += dir.x * forceMagnitude * config.handInteractionRadius * config.handForce;
-                        cy += dir.y * forceMagnitude * config.handInteractionRadius * config.handForce;
-                        cz += dir.z * forceMagnitude * config.handInteractionRadius * config.handForce;
+                        varying vec3 vColor;
+                        varying float vAlpha;
+                        
+                        // Simplex noise functions
+                        vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                        vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+                        vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+                        vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+                        
+                        float snoise(vec3 v) {
+                            const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+                            const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+                            
+                            vec3 i  = floor(v + dot(v, C.yyy));
+                            vec3 x0 = v - i + dot(i, C.xxx);
+                            
+                            vec3 g = step(x0.yzx, x0.xyz);
+                            vec3 l = 1.0 - g;
+                            vec3 i1 = min(g.xyz, l.zxy);
+                            vec3 i2 = max(g.xyz, l.zxy);
+                            
+                            vec3 x1 = x0 - i1 + C.xxx;
+                            vec3 x2 = x0 - i2 + C.yyy;
+                            vec3 x3 = x0 - D.yyy;
+                            
+                            i = mod289(i);
+                            vec4 p = permute(permute(permute(
+                                i.z + vec4(0.0, i1.z, i2.z, 1.0))
+                                + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+                                + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+                            
+                            float n_ = 0.142857142857;
+                            vec3 ns = n_ * D.wyz - D.xzx;
+                            
+                            vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+                            
+                            vec4 x_ = floor(j * ns.z);
+                            vec4 y_ = floor(j - 7.0 * x_);
+                            
+                            vec4 x = x_ *ns.x + ns.yyyy;
+                            vec4 y = y_ *ns.x + ns.yyyy;
+                            vec4 h = 1.0 - abs(x) - abs(y);
+                            
+                            vec4 b0 = vec4(x.xy, y.xy);
+                            vec4 b1 = vec4(x.zw, y.zw);
+                            
+                            vec4 s0 = floor(b0)*2.0 + 1.0;
+                            vec4 s1 = floor(b1)*2.0 + 1.0;
+                            vec4 sh = -step(h, vec4(0.0));
+                            
+                            vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+                            vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+                            
+                            vec3 p0 = vec3(a0.xy, h.x);
+                            vec3 p1 = vec3(a0.zw, h.y);
+                            vec3 p2 = vec3(a1.xy, h.z);
+                            vec3 p3 = vec3(a1.zw, h.w);
+                            
+                            vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+                            p0 *= norm.x;
+                            p1 *= norm.y;
+                            p2 *= norm.z;
+                            p3 *= norm.w;
+                            
+                            vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+                            m = m * m;
+                            return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+                        }
+                        
+                        void main() {
+                            vec3 pos = position;
+                            
+                            // Noise-based flow
+                            float t = uTime * uFlowSpeed;
+                            float noise = snoise(pos * uNoiseScale + vec3(t * 0.5));
+                            float noise2 = snoise(pos * uNoiseScale * 0.5 + vec3(t * 0.3, t * 0.2, 0.0));
+                            
+                            // Audio displacement
+                            float audioFactor = uAudioLow * 2.0 + uAudioMid * 1.5 + uAudioHigh * 1.0;
+                            audioFactor *= uAudioSensitivity;
+                            
+                            vec3 displacement = normalize(pos) * noise * audioFactor * 0.5;
+                            pos += displacement;
+                            
+                            // Rotation based on audio
+                            float angle = uAudioMid * 3.14159 * 0.5 + phase;
+                            float c = cos(angle);
+                            float s = sin(angle);
+                            mat2 rot = mat2(c, -s, s, c);
+                            pos.xz *= rot;
+                            
+                            // Hand influence
+                            float handEffect = 0.0;
+                            vec3 handForce = vec3(0.0);
+                            
+                            for (int i = 0; i < 10; i++) {
+                                if (i >= uHandCount) break;
+                                
+                                vec3 handPos = uHandPositions[i];
+                                vec3 toHand = handPos - pos;
+                                float dist = length(toHand);
+                                
+                                if (dist < 5.0) {
+                                    float influence = (1.0 - dist / 5.0) * uHandInfluence;
+                                    handForce += normalize(toHand) * influence;
+                                    handEffect += influence * 0.5;
+                                }
+                            }
+                            
+                            pos += handForce * 0.3;
+                            
+                            // Calculate final properties
+                            float energy = audioFactor + handEffect;
+                            vAlpha = 0.3 + energy * 0.7;
+                            vColor = color * (1.0 + energy * 0.5);
+                            
+                            // Position and size
+                            vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+                            gl_Position = projectionMatrix * mvPosition;
+                            
+                            float sizeMultiplier = 1.0 + energy * 2.0;
+                            gl_PointSize = size * sizeMultiplier * uPixelRatio * (300.0 / -mvPosition.z);
+                        }
+                    `,
+                    fragmentShader: `
+                        varying vec3 vColor;
+                        varying float vAlpha;
+                        
+                        void main() {
+                            // Circular particle shape
+                            vec2 coord = gl_PointCoord - vec2(0.5);
+                            float dist = length(coord);
+                            
+                            if (dist > 0.5) discard;
+                            
+                            // Soft edge
+                            float alpha = smoothstep(0.5, 0.0, dist) * vAlpha;
+                            
+                            // Glow effect
+                            float glow = exp(-dist * 8.0);
+                            vec3 finalColor = vColor * (0.5 + glow * 0.5);
+                            
+                            gl_FragColor = vec4(finalColor, alpha);
+                        }
+                    `,
+                    transparent: true,
+                    depthWrite: false,
+                    blending: THREE.AdditiveBlending,
+                    vertexColors: true
+                });
+                
+                this.particleSystem = new THREE.Points(geometry, material);
+                this.scene.add(this.particleSystem);
+            }
+
+            initPostProcessing() {
+                this.composer = new EffectComposer(this.renderer);
+                
+                const renderPass = new RenderPass(this.scene, this.camera);
+                this.composer.addPass(renderPass);
+                
+                // Bloom pass
+                this.bloomPass = new UnrealBloomPass(
+                    new THREE.Vector2(window.innerWidth, window.innerHeight),
+                    this.config.bloomStrength,
+                    0.4,
+                    0.85
+                );
+                this.composer.addPass(this.bloomPass);
+            }
+
+            initAudioAnalyzer() {
+                this.audioAnalyzer = {
+                    context: null,
+                    analyser: null,
+                    dataArray: null,
+                    source: null,
+                    active: false
+                };
+            }
+
+            async enableAudio() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: false,
+                            noiseSuppression: false,
+                            autoGainControl: false
+                        }
+                    });
+                    
+                    this.audioAnalyzer.context = new (window.AudioContext || window.webkitAudioContext)({
+                        latencyHint: 'interactive'
+                    });
+                    
+                    this.audioAnalyzer.analyser = this.audioAnalyzer.context.createAnalyser();
+                    this.audioAnalyzer.analyser.fftSize = 2048;
+                    this.audioAnalyzer.analyser.smoothingTimeConstant = 0.75;
+                    this.audioAnalyzer.analyser.minDecibels = -90;
+                    this.audioAnalyzer.analyser.maxDecibels = -10;
+                    
+                    this.audioAnalyzer.dataArray = new Uint8Array(
+                        this.audioAnalyzer.analyser.frequencyBinCount
+                    );
+                    
+                    this.audioAnalyzer.source = this.audioAnalyzer.context.createMediaStreamSource(stream);
+                    this.audioAnalyzer.source.connect(this.audioAnalyzer.analyser);
+                    
+                    this.audioAnalyzer.active = true;
+                    this.audioEnabled = true;
+                    
+                    document.getElementById('btn-audio').classList.add('active');
+                    document.getElementById('btn-audio').innerHTML = '<span>🎤</span> Audio: ON';
+                    
+                    this.showToast('Audio input enabled');
+                    
+                } catch (err) {
+                    console.error('Audio init error:', err);
+                    this.showToast('Audio permission denied or unavailable');
+                }
+            }
+
+            async enableHands() {
+                try {
+                    const video = document.getElementById('video-input');
+                    
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: {
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 },
+                            facingMode: 'user'
+                        }
+                    });
+                    
+                    video.srcObject = stream;
+                    await video.play();
+                    
+                    this.handTracker = new window.Hands({
+                        locateFile: (file) => {
+                            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+                        }
+                    });
+                    
+                    this.handTracker.setOptions({
+                        maxNumHands: 2,
+                        modelComplexity: 1,
+                        minDetectionConfidence: 0.7,
+                        minTrackingConfidence: 0.7
+                    });
+                    
+                    this.handTracker.onResults((results) => {
+                        this.processHandResults(results);
+                    });
+                    
+                    const camera = new window.Camera(video, {
+                        onFrame: async () => {
+                            await this.handTracker.send({ image: video });
+                        },
+                        width: 1280,
+                        height: 720
+                    });
+                    
+                    camera.start();
+                    
+                    this.handsEnabled = true;
+                    document.getElementById('btn-hands').classList.add('active');
+                    document.getElementById('btn-hands').innerHTML = '<span>✋</span> Hands: ON';
+                    
+                    this.showToast('Hand tracking enabled');
+                    
+                } catch (err) {
+                    console.error('Hand tracking error:', err);
+                    this.showToast('Hand tracking unavailable');
+                }
+            }
+
+            processHandResults(results) {
+                this.handLandmarks = [];
+                
+                if (results.multiHandLandmarks) {
+                    for (const landmarks of results.multiHandLandmarks) {
+                        // Convert normalized coordinates to 3D world space
+                        for (let i = 0; i < landmarks.length; i++) {
+                            const lm = landmarks[i];
+                            
+                            // Map from [0,1] to [-1,1] and scale
+                            const x = (lm.x - 0.5) * 30;
+                            const y = -(lm.y - 0.5) * 30;
+                            const z = -lm.z * 15;
+                            
+                            this.handLandmarks.push(new THREE.Vector3(x, y, z));
+                        }
                     }
                 }
-
-                posAttr.setXYZ(i, cx, cy, cz);
             }
 
-            posAttr.needsUpdate = true;
+            analyzeAudio() {
+                if (!this.audioAnalyzer.active || !this.audioAnalyzer.analyser) {
+                    return;
+                }
+                
+                this.audioAnalyzer.analyser.getByteFrequencyData(this.audioAnalyzer.dataArray);
+                
+                const bufferLength = this.audioAnalyzer.analyser.frequencyBinCount;
+                const data = this.audioAnalyzer.dataArray;
+                
+                // Frequency band analysis
+                const lowEnd = Math.floor(bufferLength * 0.1);
+                const midEnd = Math.floor(bufferLength * 0.4);
+                
+                let lowSum = 0, midSum = 0, highSum = 0;
+                
+                for (let i = 0; i < bufferLength; i++) {
+                    const value = data[i] / 255;
+                    
+                    if (i < lowEnd) {
+                        lowSum += value;
+                    } else if (i < midEnd) {
+                        midSum += value;
+                    } else {
+                        highSum += value;
+                    }
+                }
+                
+                this.audioBands.low = lowSum / lowEnd;
+                this.audioBands.mid = midSum / (midEnd - lowEnd);
+                this.audioBands.high = highSum / (bufferLength - midEnd);
+                this.audioBands.overall = (this.audioBands.low + this.audioBands.mid + this.audioBands.high) / 3;
+            }
 
-            // Rotate entire system slowly
-            particles.rotation.y = time * 0.05;
+            updateParticles() {
+                if (!this.particleSystem) return;
+                
+                const uniforms = this.particleSystem.material.uniforms;
+                
+                uniforms.uTime.value = this.clock.getElapsedTime();
+                uniforms.uAudioLow.value = this.audioBands.low;
+                uniforms.uAudioMid.value = this.audioBands.mid;
+                uniforms.uAudioHigh.value = this.audioBands.high;
+                uniforms.uAudioOverall.value = this.audioBands.overall;
+                
+                // Update hand positions
+                const handPositions = [];
+                const maxHands = Math.min(this.handLandmarks.length, 10);
+                
+                for (let i = 0; i < maxHands; i++) {
+                    handPositions.push(this.handLandmarks[i]);
+                }
+                
+                uniforms.uHandPositions.value = handPositions;
+                uniforms.uHandCount.value = maxHands;
+            }
 
-            controls.update();
-            renderer.render(scene, camera);
+            updateUI() {
+                // FPS counter
+                this.frameCount++;
+                const now = performance.now();
+                if (now - this.lastFPSUpdate > 1000) {
+                    this.fps = Math.round(this.frameCount / ((now - this.lastFPSUpdate) / 1000));
+                    document.getElementById('fps').textContent = this.fps;
+                    this.frameCount = 0;
+                    this.lastFPSUpdate = now;
+                }
+                
+                // Particle count
+                document.getElementById('particle-count').textContent = 
+                    this.config.particleCount.toLocaleString();
+                
+                // Hand count
+                document.getElementById('hand-count').textContent = 
+                    Math.floor(this.handLandmarks.length / 21);
+                
+                // Audio level
+                const level = Math.round(this.audioBands.overall * 100);
+                document.getElementById('audio-level').textContent = `${level}%`;
+                
+                // Audio visualizer bars
+                const vizContainer = document.getElementById('audio-viz');
+                if (vizContainer.children.length === 0) {
+                    for (let i = 0; i < 16; i++) {
+                        const bar = document.createElement('div');
+                        bar.className = 'audio-bar';
+                        vizContainer.appendChild(bar);
+                    }
+                }
+                
+                if (this.audioAnalyzer.active && this.audioAnalyzer.dataArray) {
+                    const bars = vizContainer.children;
+                    const step = Math.floor(this.audioAnalyzer.dataArray.length / bars.length);
+                    
+                    for (let i = 0; i < bars.length; i++) {
+                        const value = this.audioAnalyzer.dataArray[i * step] / 255;
+                        bars[i].style.height = `${value * 100}%`;
+                    }
+                }
+            }
+
+            applyPreset(presetName) {
+                const preset = PRESETS[presetName];
+                if (!preset) return;
+                
+                this.config = { ...preset };
+                
+                // Recreate particle system with new config
+                if (this.particleSystem) {
+                    this.scene.remove(this.particleSystem);
+                    this.particleSystem.geometry.dispose();
+                    this.particleSystem.material.dispose();
+                }
+                
+                this.initParticleSystem();
+                
+                // Update postprocessing
+                if (this.bloomPass) {
+                    this.bloomPass.strength = preset.bloomStrength;
+                }
+                
+                // Update uniforms
+                const uniforms = this.particleSystem.material.uniforms;
+                uniforms.uNoiseScale.value = preset.noiseScale;
+                uniforms.uFlowSpeed.value = preset.flowSpeed;
+                uniforms.uHandInfluence.value = preset.handInfluence;
+                uniforms.uAudioSensitivity.value = preset.audioSensitivity;
+                
+                this.showToast(`Preset: ${presetName.toUpperCase()}`);
+            }
+
+            initUI() {
+                // Audio button
+                document.getElementById('btn-audio').addEventListener('click', () => {
+                    if (!this.audioEnabled) {
+                        this.enableAudio();
+                    } else {
+                        if (this.audioAnalyzer.context) {
+                            if (this.audioAnalyzer.context.state === 'running') {
+                                this.audioAnalyzer.context.suspend();
+                                this.audioAnalyzer.active = false;
+                                document.getElementById('btn-audio').classList.remove('active');
+                                document.getElementById('btn-audio').innerHTML = '<span>🎤</span> Audio: OFF';
+                            } else {
+                                this.audioAnalyzer.context.resume();
+                                this.audioAnalyzer.active = true;
+                                document.getElementById('btn-audio').classList.add('active');
+                                document.getElementById('btn-audio').innerHTML = '<span>🎤</span> Audio: ON';
+                            }
+                        }
+                    }
+                });
+                
+                // Hands button
+                document.getElementById('btn-hands').addEventListener('click', () => {
+                    if (!this.handsEnabled) {
+                        this.enableHands();
+                    }
+                });
+                
+                // Fullscreen button
+                document.getElementById('btn-fullscreen').addEventListener('click', () => {
+                    if (!document.fullscreenElement) {
+                        document.documentElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                });
+                
+                // PostFX toggle
+                document.getElementById('btn-postfx').addEventListener('click', () => {
+                    this.postFXEnabled = !this.postFXEnabled;
+                    const btn = document.getElementById('btn-postfx');
+                    if (this.postFXEnabled) {
+                        btn.classList.add('active');
+                        btn.innerHTML = '<span>✨</span> FX: ON';
+                    } else {
+                        btn.classList.remove('active');
+                        btn.innerHTML = '<span>✨</span> FX: OFF';
+                    }
+                });
+                
+                // Preset buttons
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        this.applyPreset(btn.dataset.preset);
+                    });
+                });
+            }
+
+            initEventListeners() {
+                // Window resize
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                    this.composer.setSize(window.innerWidth, window.innerHeight);
+                });
+                
+                // Keyboard shortcuts
+                window.addEventListener('keydown', (e) => {
+                    switch(e.key.toLowerCase()) {
+                        case 'a':
+                            document.getElementById('btn-audio').click();
+                            break;
+                        case 'h':
+                            document.getElementById('btn-hands').click();
+                            break;
+                        case 'f':
+                            document.getElementById('btn-fullscreen').click();
+                            break;
+                        case 'x':
+                            document.getElementById('btn-postfx').click();
+                            break;
+                        case '1':
+                        case '2':
+                        case '3':
+                        case '4':
+                        case '5':
+                            const presets = ['ambient', 'energy', 'bass', 'ethereal', 'chaos'];
+                            const index = parseInt(e.key) - 1;
+                            if (presets[index]) {
+                                const btn = document.querySelector(`[data-preset="${presets[index]}"]`);
+                                if (btn) btn.click();
+                            }
+                            break;
+                    }
+                });
+            }
+
+            showToast(message) {
+                const toast = document.getElementById('status-toast');
+                toast.textContent = message;
+                toast.classList.add('show');
+                
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                
+                // Update modules
+                this.analyzeAudio();
+                this.updateParticles();
+                this.controls.update();
+                this.updateUI();
+                
+                // Render
+                if (this.postFXEnabled && this.composer) {
+                    this.composer.render();
+                } else {
+                    this.renderer.render(this.scene, this.camera);
+                }
+            }
         }
 
-        // Handle Resize
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
+        // =====================================================================
+        // APPLICATION START
+        // =====================================================================
+        
+        const engine = new ParticleEngine();
+        engine.init().catch(err => {
+            console.error('Initialization error:', err);
+            document.getElementById('loading-text').textContent = 'Initialization failed. Please refresh.';
         });
-
-        animate();
+        
+        // Global error handling
+        window.addEventListener('error', (e) => {
+            console.error('Runtime error:', e.error);
+        });
+        
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
+        
     </script>
 </body>
 </html>
