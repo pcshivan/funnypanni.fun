@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Particle System</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #000; font-family: sans-serif; }
+        #canvas-container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        
+        /* Hidden video element for processing */
+        #input-video { display: none; }
+        
+        /* Loading overlay */
+        #loading {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            color: white; z-index: 10; pointer-events: none; font-size: 1.2rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="loading">Initializing AI & Graphics...<br>Please allow Camera/Mic access.</div>
+    <div id="canvas-container"></div>
+    <video id="input-video" playsinline></video>
+
+    <!-- Import Map for Clean Module Loading -->
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+                "@mediapipe/hands": "https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js",
+                "lil-gui": "https://cdn.jsdelivr.net/npm/lil-gui@0.19.1/dist/lil-gui.esm.min.js"
+            }
+        }
+    </script>
+
+    <!-- External Libraries for MediaPipe (Pre-load) -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import GUI from 'lil-gui';
+
+        // --- Configuration & State ---
+        const config = {
+            particleCount: 15000,
+            particleSize: 2,
+            handInteractionRadius: 30,
+            handForce: 2.0, // Positive = Repel, Negative = Attract
+            audioSensitivity: 2.5,
+            audioEnabled: false,
+            selectedCamera: null
+        };
+
+        const state = {
+            handPosition: new THREE.Vector3(-9999, -9999, -9999), // Start off-screen
+            isHandDetected: false,
+            audioVolume: 0,
+            time: 0
+        };
+
+        // --- Three.js Setup ---
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x000000, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 100;
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+
+        // --- Particle System ---
+        const geometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(config.particleCount * 3);
+        const originalPositions = new Float32Array(config.particleCount * 3);
+        const colors = new Float32Array(config.particleCount * 3);
+        const randoms = new Float32Array(config.particleCount); // For phase variation
+
+        const color1 = new THREE.Color(0x00ffff); // Cyan
+        const color2 = new THREE.Color(0xff00ff); // Magenta
+
+        for (let i = 0; i < config.particleCount; i++) {
+            // Sphere distribution
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.acos((Math.random() * 2) - 1);
+            const r = 40 + Math.random() * 40;
+
+            const x = r * Math.sin(phi) * Math.cos(theta);
+            const y = r * Math.sin(phi) * Math.sin(theta);
+            const z = r * Math.cos(phi);
+
+            positions[i * 3] = x;
+            positions[i * 3 + 1] = y;
+            positions[i * 3 + 2] = z;
+
+            originalPositions[i * 3] = x;
+            originalPositions[i * 3 + 1] = y;
+            originalPositions[i * 3 + 2] = z;
+
+            randoms[i] = Math.random();
+
+            // Gradient color
+            const mixedColor = color1.clone().lerp(color2, Math.random());
+            colors[i * 3] = mixedColor.r;
+            colors[i * 3 + 1] = mixedColor.g;
+            colors[i * 3 + 2] = mixedColor.b;
+        }
+
+        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const material = new THREE.PointsMaterial({
+            size: config.particleSize,
+            vertexColors: true,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            transparent: true,
+            opacity: 0.8
+        });
+
+        const particles = new THREE.Points(geometry, material);
+        scene.add(particles);
+
+        // --- MediaPipe Hand Tracking ---
+        const videoElement = document.getElementById('input-video');
+        let cameraFeed = null;
+
+        const hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 1,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults((results) => {
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                state.isHandDetected = true;
+                const landmarks = results.multiHandLandmarks[0];
+                
+                // Track Index Finger Tip (Landmark 8) and Palm (Landmark 9)
+                // Map 2D video coordinates (0-1) to 3D world space approx (-50 to 50)
+                const x = (0.5 - landmarks[9].x) * 150; // Invert X for mirror effect
+                const y = (0.5 - landmarks[9].y) * 100;
+                
+                // Simple smoothing
+                state.handPosition.lerp(new THREE.Vector3(x, y, 0), 0.1);
+            } else {
+                state.isHandDetected = false;
+            }
+        });
+
+        // --- Audio Analysis ---
+        let audioContext, analyser, dataArray, microphone;
+        
+        async function initAudio() {
+            if(audioContext) return; // Already running
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256; // Tradeoff between resolution and speed
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                microphone = audioContext.createMediaStreamSource(stream);
+                microphone.connect(analyser);
+                
+                dataArray = new Uint8Array(analyser.frequencyBinCount);
+            } catch(e) {
+                console.error("Audio init failed", e);
+                alert("Microphone access denied or failed.");
+            }
+        }
+
+        function getAudioVolume() {
+            if (!config.audioEnabled || !analyser) return 0;
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate average volume
+            let sum = 0;
+            for(let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+            }
+            const average = sum / dataArray.length;
+            return average; // 0 to 255
+        }
+
+        // --- GUI & Camera Management ---
+        const gui = new GUI({ title: 'Settings' });
+        
+        // 1. Particle Settings
+        const particleFolder = gui.addFolder('Particles');
+        particleFolder.add(config, 'handForce', -5, 5).name('Hand Force');
+        particleFolder.add(config, 'handInteractionRadius', 10, 100).name('Radius');
+        particleFolder.add(material, 'size', 0.5, 5).name('Base Size');
+
+        // 2. Audio Settings
+        const audioFolder = gui.addFolder('Audio Reactivity');
+        audioFolder.add(config, 'audioSensitivity', 0.1, 5).name('Sensitivity');
+        audioFolder.add(config, 'audioEnabled').name('Enable Mic').onChange(async (val) => {
+            if(val) {
+                await initAudio();
+                if(audioContext && audioContext.state === 'suspended') {
+                    audioContext.resume();
+                }
+            }
+        });
+
+        // 3. Camera Settings
+        const cameraFolder = gui.addFolder('Camera Selection');
+        
+        async function getCameras() {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            const options = {};
+            videoDevices.forEach(device => {
+                options[device.label || `Camera ${Object.keys(options).length + 1}`] = device.deviceId;
+            });
+            return options;
+        }
+
+        async function startCamera(deviceId) {
+            if (cameraFeed) await cameraFeed.stop();
+            
+            // Create MediaPipe Camera Utils instance
+            cameraFeed = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({image: videoElement});
+                },
+                width: 640,
+                height: 480,
+                deviceId: deviceId ? { exact: deviceId } : undefined
+            });
+            
+            cameraFeed.start()
+                .then(() => document.getElementById('loading').style.display = 'none')
+                .catch(err => console.error("Camera start error:", err));
+        }
+
+        getCameras().then(cameraOptions => {
+            // Default to first camera
+            const firstCamId = Object.values(cameraOptions)[0];
+            config.selectedCamera = firstCamId;
+
+            cameraFolder.add(config, 'selectedCamera', cameraOptions).name('Device').onChange((deviceId) => {
+                startCamera(deviceId);
+            });
+            
+            // Initial Start
+            startCamera(firstCamId);
+        });
+
+
+        // --- Animation Loop ---
+        const clock = new THREE.Clock();
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            const time = clock.getElapsedTime();
+            state.time = time;
+
+            // 1. Process Audio
+            let volume = getAudioVolume(); // 0 - 255
+            let normVolume = volume / 255;
+            
+            // 2. Update Particles
+            const posAttr = geometry.attributes.position;
+            
+            for (let i = 0; i < config.particleCount; i++) {
+                const px = originalPositions[i * 3];
+                const py = originalPositions[i * 3 + 1];
+                const pz = originalPositions[i * 3 + 2];
+
+                // Basic floating animation (noise-like)
+                const drift = Math.sin(time * 0.5 + randoms[i] * 10) * 2;
+                
+                let cx = px + Math.cos(time * 0.2 + py * 0.05) * 2;
+                let cy = py + Math.sin(time * 0.2 + px * 0.05) * 2;
+                let cz = pz + drift;
+
+                // Audio Reactivity (Pulse outward based on volume)
+                if (config.audioEnabled) {
+                    const audioBoost = normVolume * config.audioSensitivity * 10;
+                    cx *= (1 + normVolume * 0.2);
+                    cy *= (1 + normVolume * 0.2);
+                    cz *= (1 + normVolume * 0.2);
+                    
+                    // Jitter
+                    cx += (Math.random() - 0.5) * audioBoost;
+                    cy += (Math.random() - 0.5) * audioBoost;
+                    cz += (Math.random() - 0.5) * audioBoost;
+                }
+
+                // Hand Interaction
+                if (state.isHandDetected) {
+                    // Create a vector for the current particle
+                    const pVec = new THREE.Vector3(cx, cy, cz);
+                    const distance = pVec.distanceTo(state.handPosition);
+
+                    if (distance < config.handInteractionRadius) {
+                        // Calculate direction from hand to particle
+                        const dir = new THREE.Vector3().subVectors(pVec, state.handPosition).normalize();
+                        
+                        // Force calculation (linear falloff)
+                        const forceMagnitude = (config.handInteractionRadius - distance) / config.handInteractionRadius;
+                        
+                        // Apply push/pull
+                        cx += dir.x * forceMagnitude * config.handInteractionRadius * config.handForce;
+                        cy += dir.y * forceMagnitude * config.handInteractionRadius * config.handForce;
+                        cz += dir.z * forceMagnitude * config.handInteractionRadius * config.handForce;
+                    }
+                }
+
+                posAttr.setXYZ(i, cx, cy, cz);
+            }
+
+            posAttr.needsUpdate = true;
+
+            // Rotate entire system slowly
+            particles.rotation.y = time * 0.05;
+
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle Resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        animate();
+    </script>
+</body>
+</html>
